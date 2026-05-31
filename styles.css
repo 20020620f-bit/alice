@@ -2846,8 +2846,15 @@ body:has(#view-overview.active) .transaction-list.compact {
 }
 
 .date-input-proxy {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+  position: fixed;
+  left: -200vw;
+  bottom: 0;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
   opacity: 0;
+  appearance: none;
 }

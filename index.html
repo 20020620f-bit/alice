@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="assets/app-icon-180.png">
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.css?v=13">
+    <link rel="stylesheet" href="styles.css?v=14">
   </head>
   <body>
     <svg class="sprite" aria-hidden="true">
@@ -444,7 +444,6 @@
               </button>
               <input id="noteInput" name="note" type="hidden">
             </label>
-            <input class="date-input-proxy" id="dateInput" name="date" type="date" required aria-label="选择日期">
           </div>
 
           <div class="composer-keypad" id="composerKeypad" aria-label="数字键盘">
@@ -468,6 +467,7 @@
             <button type="button" data-key="today">今天</button>
           </div>
         </div>
+        <input class="date-input-proxy" id="dateInput" name="date" type="date" required aria-label="选择日期">
       </form>
     </section>
 
@@ -536,6 +536,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=14"></script>
   </body>
 </html>
