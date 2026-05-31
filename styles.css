@@ -2262,3 +2262,302 @@ body:has(#view-overview.active) .fab svg {
   width: 27px;
   height: 27px;
 }
+
+/* Card-list home and calculator composer */
+body:has(#view-overview.active) {
+  background: #f4f4f4;
+}
+
+body:has(#view-overview.active) .app-shell {
+  background: #f4f4f4;
+}
+
+body:has(#view-overview.active) .daily-ledger {
+  margin-top: 10px;
+}
+
+body:has(#view-overview.active) .transaction-list.compact {
+  display: grid;
+  gap: 10px;
+}
+
+.expense-card {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 74px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(24, 31, 34, 0.05);
+}
+
+.expense-card .category-icon {
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  border-radius: 8px;
+}
+
+.expense-card .category-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.4;
+}
+
+.expense-card-main {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.expense-card-main strong {
+  overflow: hidden;
+  color: #050505;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.12;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-card-main span {
+  overflow: hidden;
+  color: #9b9b9b;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-card-amount {
+  color: #050505;
+  font-size: 16px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.expense-card-amount.income {
+  color: #31a847;
+}
+
+.composer-panel {
+  gap: 12px;
+  max-height: calc(96svh - env(safe-area-inset-top));
+  padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+  background: #f3f3f3;
+  border-color: rgba(255, 255, 255, 0.8);
+  border-radius: 24px 24px 0 0;
+}
+
+.composer-panel .sheet-header {
+  align-items: center;
+}
+
+.composer-panel .sheet-header strong {
+  font-size: 20px;
+}
+
+.composer-panel .entry-type {
+  max-width: 220px;
+  margin: 0 auto;
+  padding: 3px;
+  background: #e8e8e8;
+  border-radius: 999px;
+}
+
+.composer-panel .entry-type button {
+  min-height: 34px;
+  border-radius: 999px;
+}
+
+.composer-amount {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 8px 22px rgba(24, 31, 34, 0.04);
+}
+
+.composer-amount input {
+  height: 44px;
+  padding: 0;
+  color: #050505;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-size: 30px;
+  text-align: right;
+}
+
+.composer-category-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
+  gap: 4px;
+  align-items: end;
+  min-height: 38px;
+}
+
+.composer-category-tabs button {
+  position: relative;
+  min-width: 0;
+  min-height: 34px;
+  color: #a9a9a9;
+  background: transparent;
+  border-radius: 0;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.composer-category-tabs button.active {
+  color: #050505;
+}
+
+.composer-category-tabs button.active::after {
+  content: "";
+  position: absolute;
+  right: 22%;
+  bottom: 0;
+  left: 22%;
+  height: 4px;
+  background: #050505;
+  border-radius: 999px;
+}
+
+.composer-panel .category-section {
+  gap: 8px;
+}
+
+.composer-panel .category-section-head {
+  min-height: 28px;
+}
+
+.composer-panel .category-section-head > span {
+  color: #777;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.composer-panel .category-manage-button {
+  width: 32px;
+  height: 32px;
+  color: #1f84ff;
+  background: transparent;
+  border: 0;
+}
+
+.composer-panel .category-manage-button svg {
+  width: 25px;
+  height: 25px;
+  stroke-width: 3;
+}
+
+.composer-panel .category-picker {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  max-height: 310px;
+  padding: 2px 2px 4px;
+}
+
+.composer-panel .category-option {
+  gap: 10px;
+  min-height: 92px;
+  padding: 12px 5px 10px;
+  background: #fff;
+  border: 3px solid transparent;
+  border-radius: 18px;
+  box-shadow: 0 8px 22px rgba(24, 31, 34, 0.035);
+}
+
+.composer-panel .category-option.active {
+  background: #fff;
+  border-color: #2387ff;
+  box-shadow: none;
+}
+
+.composer-panel .category-option .category-icon {
+  width: 35px;
+  height: 35px;
+  background: transparent;
+}
+
+.composer-panel .category-option .category-icon svg {
+  width: 26px;
+  height: 26px;
+  stroke-width: 2.35;
+}
+
+.composer-panel .category-option span {
+  color: #a5a5a5;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.composer-panel .category-option.active span {
+  color: #050505;
+}
+
+.composer-meta {
+  grid-template-columns: 1fr 1.35fr;
+  gap: 8px;
+}
+
+.composer-meta label {
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(24, 31, 34, 0.035);
+}
+
+.composer-meta input {
+  padding: 10px 11px;
+  background: #fff;
+  border: 0;
+  border-radius: 16px;
+  font-size: 13px;
+}
+
+.composer-keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.composer-keypad button {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 48px;
+  color: #050505;
+  background: #fff;
+  border: 0;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(24, 31, 34, 0.04);
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.composer-keypad button:active {
+  transform: scale(0.98);
+}
+
+.composer-keypad svg {
+  width: 23px;
+  height: 23px;
+  stroke-width: 2.4;
+}
+
+.composer-keypad .key-save {
+  color: #fff;
+  background: #2387ff;
+}
+
+.composer-keypad [data-key="clear"],
+.composer-keypad [data-key="today"] {
+  color: #6f6f6f;
+  font-size: 14px;
+}

@@ -62,6 +62,19 @@ const ICON_LIBRARY = [
 
 const LEGACY_DEFAULT_CATEGORY_IDS = new Set(["coffee", "taxi", "grocery"]);
 
+const COMPOSER_GROUPS = {
+  expense: [
+    { id: "shopping", label: "购物", categories: ["shopping", "daily", "gift-expense", "childcare", "fitness", "other-expense"] },
+    { id: "food", label: "吃喝", categories: ["food"] },
+    { id: "traffic", label: "交通", categories: ["traffic", "travel"] },
+    { id: "fun", label: "娱乐", categories: ["fun", "education"] },
+    { id: "life", label: "生活", categories: ["bills", "health", "housing", "phone-net", "insurance"] }
+  ],
+  income: [
+    { id: "income", label: "收入", categories: ["salary", "part-time", "bonus", "investment", "reimburse", "gift", "refund", "other-income"] }
+  ]
+};
+
 const elements = {
   monthTitle: document.querySelector("#monthTitle"),
   prevMonth: document.querySelector("#prevMonth"),
@@ -92,7 +105,9 @@ const elements = {
   amountInput: document.querySelector("#amountInput"),
   dateInput: document.querySelector("#dateInput"),
   noteInput: document.querySelector("#noteInput"),
+  composerCategoryTabs: document.querySelector("#composerCategoryTabs"),
   categoryPicker: document.querySelector("#categoryPicker"),
+  composerKeypad: document.querySelector("#composerKeypad"),
   openCategoryManager: document.querySelector("#openCategoryManager"),
   categorySheet: document.querySelector("#categorySheet"),
   categoryTypeControl: document.querySelector("#categoryTypeControl"),
@@ -117,6 +132,7 @@ let activeView = "overview";
 let ledgerFilter = "all";
 let entryType = "expense";
 let selectedCategory = DEFAULT_CATEGORIES.expense[0].id;
+let composerGroup = COMPOSER_GROUPS.expense[0].id;
 let managerType = "expense";
 let managerCategoryId = DEFAULT_CATEGORIES.expense[0].id;
 let editingEntryId = null;
@@ -133,6 +149,11 @@ function toISODate(date) {
 
 function todayISO() {
   return toISODate(new Date());
+}
+
+function currentClockTime() {
+  const date = new Date();
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function monthKey(date) {
@@ -171,6 +192,7 @@ function normalizeCategory(category, fallback) {
     icon: category.icon || fallback.icon || "dots",
     color: category.color || fallback.color || "#667067",
     tint: category.tint || fallback.tint || "#e9eee3",
+    group: category.group || fallback.group || null,
     custom: Boolean(category.custom || fallback.custom),
     customLabel: Boolean(category.customLabel || fallback.customLabel)
   };
@@ -253,6 +275,48 @@ function formatSignedMoney(value, type = "expense") {
 
 function getCategoryList(type) {
   return state.categories?.[type] || DEFAULT_CATEGORIES[type] || [];
+}
+
+function getComposerGroups(type = entryType) {
+  return COMPOSER_GROUPS[type] || COMPOSER_GROUPS.expense;
+}
+
+function defaultComposerGroup(type = entryType) {
+  return getComposerGroups(type)[0]?.id;
+}
+
+function findComposerGroupForCategory(type, categoryId) {
+  const groups = getComposerGroups(type);
+  const list = getCategoryList(type);
+  const category = list.find((item) => item.id === categoryId);
+  if (category?.group && groups.some((group) => group.id === category.group)) {
+    return category.group;
+  }
+  return groups.find((group) => group.categories.includes(categoryId))?.id || defaultComposerGroup(type);
+}
+
+function getComposerGroupLabel(type, categoryId) {
+  const groupId = findComposerGroupForCategory(type, categoryId);
+  return getComposerGroups(type).find((group) => group.id === groupId)?.label || (type === "income" ? "收入" : "支出");
+}
+
+function visibleComposerCategories() {
+  const list = getCategoryList(entryType);
+  const groups = getComposerGroups(entryType);
+  const activeGroup = groups.find((group) => group.id === composerGroup) || groups[0];
+  if (!activeGroup) return list;
+
+  const mappedIds = new Set(groups.flatMap((group) => group.categories));
+  const fallbackGroupId = groups[groups.length - 1]?.id;
+  return list.filter((category) => {
+    if (category.group) {
+      return category.group === activeGroup.id;
+    }
+    if (activeGroup.categories.includes(category.id)) {
+      return true;
+    }
+    return !mappedIds.has(category.id) && activeGroup.id === fallbackGroupId;
+  });
 }
 
 function getDefaultCategory(type, categoryId) {
@@ -411,47 +475,22 @@ function renderDailyTransactions(container, entries) {
     return;
   }
 
-  const groups = new Map();
-  entries.slice(0, 8).forEach((entry) => {
-    if (!groups.has(entry.date)) {
-      groups.set(entry.date, []);
-    }
-    groups.get(entry.date).push(entry);
-  });
-
-  container.innerHTML = [...groups.entries()]
-    .slice(0, 3)
-    .map(([date, rows]) => {
-      const dailyExpense = sumEntries(rows, "expense");
-      const dailyIncome = sumEntries(rows, "income");
-      const dailyNet = dailyIncome - dailyExpense;
-      const totalType = dailyNet >= 0 ? "income" : "expense";
-      const totalText = dailyNet === 0 ? formatMoney(0) : formatSignedMoney(Math.abs(dailyNet), totalType);
-      const rowMarkup = rows
-        .map((entry) => {
-          const category = getCategory(entry);
-          const amountText = formatSignedMoney(entry.amount, entry.type);
-          return `
-            <article class="day-entry">
-              ${iconMarkup(category)}
-              <div class="day-entry-main">
-                <strong>${escapeHTML(category.label)}</strong>
-                <span>${escapeHTML(entry.note || "未填写备注")}</span>
-              </div>
-              <strong class="day-entry-amount ${entry.type === "income" ? "income" : ""}">${amountText}</strong>
-            </article>
-          `;
-        })
-        .join("");
-
+  container.innerHTML = entries
+    .slice(0, 8)
+    .map((entry) => {
+      const category = getCategory(entry);
+      const amountText = formatSignedMoney(entry.amount, entry.type);
+      const groupLabel = getComposerGroupLabel(entry.type, entry.categoryId);
+      const meta = [entry.note || groupLabel, entry.time || entry.date.slice(5).replace("-", "/")].filter(Boolean).join(" ");
       return `
-        <section class="day-card">
-          <header class="day-card-head">
-            <strong>${formatDisplayDate(date)}</strong>
-            <span class="${totalType === "income" ? "income" : ""}">${totalText}</span>
-          </header>
-          <div class="day-card-body">${rowMarkup}</div>
-        </section>
+        <article class="expense-card">
+          ${iconMarkup(category)}
+          <div class="expense-card-main">
+            <strong>${escapeHTML(category.label)}</strong>
+            <span>${escapeHTML(meta)}</span>
+          </div>
+          <strong class="expense-card-amount ${entry.type === "income" ? "income" : ""}">${amountText}</strong>
+        </article>
       `;
     })
     .join("");
@@ -586,7 +625,12 @@ function renderInsights(entries) {
 }
 
 function renderCategoryPicker() {
-  const list = getCategoryList(entryType);
+  renderComposerCategoryTabs();
+  let list = visibleComposerCategories();
+  if (!list.length) {
+    composerGroup = defaultComposerGroup(entryType);
+    list = visibleComposerCategories();
+  }
   if (!list.some((category) => category.id === selectedCategory)) {
     selectedCategory = list[0]?.id;
   }
@@ -596,6 +640,20 @@ function renderCategoryPicker() {
       <button class="category-option ${category.id === selectedCategory ? "active" : ""}" type="button" data-category="${category.id}">
         ${iconMarkup(category)}
         <span>${escapeHTML(category.label)}</span>
+      </button>
+    `)
+    .join("");
+}
+
+function renderComposerCategoryTabs() {
+  const groups = getComposerGroups(entryType);
+  if (!groups.some((group) => group.id === composerGroup)) {
+    composerGroup = defaultComposerGroup(entryType);
+  }
+  elements.composerCategoryTabs.innerHTML = groups
+    .map((group) => `
+      <button class="${group.id === composerGroup ? "active" : ""}" type="button" data-composer-group="${group.id}">
+        ${escapeHTML(group.label)}
       </button>
     `)
     .join("");
@@ -726,6 +784,7 @@ function addCustomCategory() {
     icon: icon.id,
     color: icon.color,
     tint: icon.tint,
+    group: managerType === entryType ? composerGroup : defaultComposerGroup(managerType),
     custom: true
   };
 
@@ -747,9 +806,14 @@ function setEntryType(type) {
     button.classList.toggle("active", button.dataset.entryType === type);
   });
   const list = getCategoryList(type);
-  if (!list.some((category) => category.id === selectedCategory)) {
-    selectedCategory = list[0]?.id;
-  }
+  composerGroup = defaultComposerGroup(type);
+  selectedCategory = visibleComposerCategories()[0]?.id || list[0]?.id;
+  renderCategoryPicker();
+}
+
+function setComposerGroup(groupId) {
+  composerGroup = groupId;
+  selectedCategory = visibleComposerCategories()[0]?.id || getCategoryList(entryType)[0]?.id;
   renderCategoryPicker();
 }
 
@@ -757,8 +821,15 @@ function openComposer(options = {}) {
   const { type = "expense", categoryId = null, entry = null } = options;
   editingEntryId = entry ? entry.id : null;
   elements.composerTitle.textContent = entry ? "编辑流水" : "记一笔";
-  setEntryType(entry ? entry.type : type);
-  selectedCategory = entry ? entry.categoryId : categoryId || getCategoryList(entryType)[0]?.id;
+  entryType = entry ? entry.type : type;
+  document.querySelectorAll("[data-entry-type]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.entryType === entryType);
+  });
+  selectedCategory = entry ? entry.categoryId : categoryId;
+  composerGroup = selectedCategory ? findComposerGroupForCategory(entryType, selectedCategory) : defaultComposerGroup(entryType);
+  if (!selectedCategory) {
+    selectedCategory = visibleComposerCategories()[0]?.id || getCategoryList(entryType)[0]?.id;
+  }
   renderCategoryPicker();
 
   elements.amountInput.value = entry ? entry.amount : "";
@@ -766,7 +837,6 @@ function openComposer(options = {}) {
   elements.noteInput.value = entry ? entry.note || "" : "";
   elements.composerSheet.classList.add("open");
   elements.composerSheet.setAttribute("aria-hidden", "false");
-  window.setTimeout(() => elements.amountInput.focus(), 120);
 }
 
 function closeComposer() {
@@ -779,8 +849,52 @@ function resetForm() {
   elements.amountInput.value = "";
   elements.noteInput.value = "";
   elements.dateInput.value = todayISO();
-  selectedCategory = getCategoryList(entryType)[0]?.id;
+  selectedCategory = visibleComposerCategories()[0]?.id || getCategoryList(entryType)[0]?.id;
   renderCategoryPicker();
+}
+
+function appendAmountToken(token) {
+  const current = elements.amountInput.value;
+  const raw = token === "00" ? "00" : token;
+  if (raw === ".") {
+    elements.amountInput.value = current.includes(".") ? current : `${current || "0"}.`;
+    return;
+  }
+
+  const [integerPart, decimalPart = ""] = current.split(".");
+  if (current.includes(".") && decimalPart.length >= 2) return;
+  if (!current || current === "0") {
+    elements.amountInput.value = raw === "00" ? "0" : raw;
+    return;
+  }
+  if (!current.includes(".") && integerPart.length >= 7) return;
+  elements.amountInput.value = `${current}${raw}`;
+}
+
+function handleKeypadAction(action) {
+  if (/^\d$/.test(action) || action === "00") {
+    appendAmountToken(action);
+    return;
+  }
+  if (action === ".") {
+    appendAmountToken(action);
+    return;
+  }
+  if (action === "back") {
+    elements.amountInput.value = elements.amountInput.value.slice(0, -1);
+    return;
+  }
+  if (action === "clear") {
+    resetForm();
+    return;
+  }
+  if (action === "today") {
+    elements.dateInput.value = todayISO();
+    return;
+  }
+  if (action === "save") {
+    elements.entryForm.requestSubmit();
+  }
 }
 
 function showToast(message) {
@@ -802,12 +916,14 @@ function handleSubmit(event) {
     return;
   }
 
+  const existingEntry = editingEntryId ? state.entries.find((item) => item.id === editingEntryId) : null;
   const entry = {
     id: editingEntryId || createId(),
     type: entryType,
     categoryId: selectedCategory,
     amount: Math.round(amount * 100) / 100,
     date,
+    time: existingEntry?.time || currentClockTime(),
     note: elements.noteInput.value.trim()
   };
   const wasEditing = Boolean(editingEntryId);
@@ -891,6 +1007,16 @@ function bindEvents() {
   elements.entryForm.addEventListener("submit", handleSubmit);
   elements.resetForm.addEventListener("click", resetForm);
   elements.openCategoryManager.addEventListener("click", openCategoryManager);
+  elements.composerCategoryTabs.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-composer-group]");
+    if (!button) return;
+    setComposerGroup(button.dataset.composerGroup);
+  });
+  elements.composerKeypad.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-key]");
+    if (!button) return;
+    handleKeypadAction(button.dataset.key);
+  });
 
   document.querySelectorAll("[data-close-sheet]").forEach((control) => {
     control.addEventListener("click", closeComposer);
