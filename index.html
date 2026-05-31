@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="assets/app-icon-180.png">
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.css?v=11">
+    <link rel="stylesheet" href="styles.css?v=12">
   </head>
   <body>
     <svg class="sprite" aria-hidden="true">
@@ -418,52 +418,52 @@
           <button type="button" data-entry-type="income">收入</button>
         </div>
 
-        <label class="amount-field composer-amount">
-          <span>金额</span>
-          <input id="amountInput" name="amount" type="text" inputmode="none" placeholder="0.00" readonly required>
-        </label>
-
-        <div class="category-section">
-          <div class="composer-category-tabs" id="composerCategoryTabs" aria-label="分类分组"></div>
-          <div class="category-section-head">
-            <span>选择分类</span>
-            <button class="icon-button category-manage-button" id="openCategoryManager" type="button" aria-label="管理分类">
-              <svg><use href="#icon-settings"></use></svg>
-            </button>
+        <div class="composer-scroll-layer">
+          <div class="category-section">
+            <div class="composer-category-tabs" id="composerCategoryTabs" aria-label="分类分组"></div>
+            <div class="category-section-head">
+              <span>选择分类</span>
+              <button class="icon-button category-manage-button" id="openCategoryManager" type="button" aria-label="管理分类">
+                <svg><use href="#icon-settings"></use></svg>
+              </button>
+            </div>
+            <div class="category-picker" id="categoryPicker" aria-label="选择分类"></div>
           </div>
-          <div class="category-picker" id="categoryPicker" aria-label="选择分类"></div>
         </div>
 
-        <div class="form-grid composer-meta">
-          <label>
-            <span>日期</span>
-            <input id="dateInput" name="date" type="date" required>
-          </label>
-          <label>
-            <span>备注</span>
-            <input id="noteInput" name="note" type="text" maxlength="24" placeholder="可选">
-          </label>
-        </div>
+        <div class="composer-fixed-layer">
+          <div class="form-grid composer-meta">
+            <label class="amount-field composer-amount">
+              <span>金额</span>
+              <input id="amountInput" name="amount" type="text" inputmode="none" placeholder="0.00" readonly required>
+            </label>
+            <label>
+              <span>备注</span>
+              <input id="noteInput" name="note" type="text" maxlength="24" placeholder="可选">
+            </label>
+            <input id="dateInput" name="date" type="hidden">
+          </div>
 
-        <div class="composer-keypad" id="composerKeypad" aria-label="数字键盘">
-          <button type="button" data-key="1">1</button>
-          <button type="button" data-key="2">2</button>
-          <button type="button" data-key="3">3</button>
-          <button type="button" data-key="back" aria-label="退格">
-            <svg><use href="#icon-backspace"></use></svg>
-          </button>
-          <button type="button" data-key="4">4</button>
-          <button type="button" data-key="5">5</button>
-          <button type="button" data-key="6">6</button>
-          <button type="button" id="resetForm" data-key="clear">清空</button>
-          <button type="button" data-key="7">7</button>
-          <button type="button" data-key="8">8</button>
-          <button type="button" data-key="9">9</button>
-          <button type="button" class="key-save" data-key="save">保存</button>
-          <button type="button" data-key="00">00</button>
-          <button type="button" data-key="0">0</button>
-          <button type="button" data-key=".">.</button>
-          <button type="button" data-key="today">今天</button>
+          <div class="composer-keypad" id="composerKeypad" aria-label="数字键盘">
+            <button type="button" data-key="1">1</button>
+            <button type="button" data-key="2">2</button>
+            <button type="button" data-key="3">3</button>
+            <button type="button" data-key="back" aria-label="退格">
+              <svg><use href="#icon-backspace"></use></svg>
+            </button>
+            <button type="button" data-key="4">4</button>
+            <button type="button" data-key="5">5</button>
+            <button type="button" data-key="6">6</button>
+            <button type="button" id="resetForm" data-key="clear">清空</button>
+            <button type="button" data-key="7">7</button>
+            <button type="button" data-key="8">8</button>
+            <button type="button" data-key="9">9</button>
+            <button type="button" class="key-save" data-key="save">保存</button>
+            <button type="button" data-key="00">00</button>
+            <button type="button" data-key="0">0</button>
+            <button type="button" data-key=".">.</button>
+            <button type="button" data-key="today">今天</button>
+          </div>
         </div>
       </form>
     </section>
@@ -508,6 +508,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
   </body>
 </html>
