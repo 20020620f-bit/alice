@@ -1,6 +1,6 @@
 {
-  "name": "晴账",
-  "short_name": "晴账",
+  "name": "记账",
+  "short_name": "记账",
   "description": "移动端记账应用",
   "start_url": "./index.html",
   "scope": "./",
