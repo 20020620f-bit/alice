@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="assets/app-icon-180.png">
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.css?v=12">
+    <link rel="stylesheet" href="styles.css?v=13">
   </head>
   <body>
     <svg class="sprite" aria-hidden="true">
@@ -439,9 +439,12 @@
             </label>
             <label>
               <span>备注</span>
-              <input id="noteInput" name="note" type="text" maxlength="24" placeholder="可选">
+              <button class="note-trigger" id="noteTrigger" type="button" aria-label="编辑备注">
+                <span id="notePreview">可选</span>
+              </button>
+              <input id="noteInput" name="note" type="hidden">
             </label>
-            <input id="dateInput" name="date" type="hidden">
+            <input class="date-input-proxy" id="dateInput" name="date" type="date" required aria-label="选择日期">
           </div>
 
           <div class="composer-keypad" id="composerKeypad" aria-label="数字键盘">
@@ -506,8 +509,33 @@
       </div>
     </section>
 
+    <section class="modal-layer" id="noteDialog" aria-hidden="true" aria-labelledby="noteDialogTitle">
+      <div class="modal-backdrop" data-close-note-dialog></div>
+      <div class="note-dialog" role="dialog" aria-modal="true">
+        <header class="note-dialog-head">
+          <span></span>
+          <strong id="noteDialogTitle">备注</strong>
+          <button type="button" id="openNoteHistory">历史</button>
+        </header>
+        <textarea id="noteTextarea" maxlength="80" placeholder="暂无备注"></textarea>
+        <button class="note-confirm" id="confirmNote" type="button">确定</button>
+      </div>
+    </section>
+
+    <section class="modal-layer" id="noteHistoryDialog" aria-hidden="true" aria-labelledby="noteHistoryTitle">
+      <div class="modal-backdrop" data-close-note-history></div>
+      <div class="note-history-dialog" role="dialog" aria-modal="true">
+        <header class="note-dialog-head">
+          <button class="danger-text" id="clearNoteHistory" type="button">删除全部</button>
+          <strong id="noteHistoryTitle">历史备注</strong>
+          <button type="button" id="confirmNoteHistory">确定</button>
+        </header>
+        <div class="note-history-list" id="noteHistoryList"></div>
+      </div>
+    </section>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=13"></script>
   </body>
 </html>

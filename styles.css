@@ -2632,6 +2632,38 @@ body:has(#view-overview.active) .transaction-list.compact {
   font-weight: 850;
 }
 
+.composer-fixed-layer .note-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 0;
+  color: #9b9b9b;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 850;
+  text-align: left;
+}
+
+.composer-fixed-layer .note-trigger span {
+  overflow: hidden;
+  max-width: 100%;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-fixed-layer .note-trigger .has-note {
+  color: #050505;
+}
+
 .composer-fixed-layer .composer-amount input {
   font-size: 19px;
   font-weight: 950;
@@ -2681,4 +2713,141 @@ body:has(#view-overview.active) .transaction-list.compact {
 
 .composer-category-tabs {
   margin-top: -2px;
+}
+
+.modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: none;
+}
+
+.modal-layer.open {
+  display: block;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.note-dialog,
+.note-history-dialog {
+  position: absolute;
+  right: 0;
+  left: 0;
+  width: min(92vw, 430px);
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.18);
+}
+
+.note-dialog {
+  top: 24svh;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.note-dialog-head {
+  display: grid;
+  grid-template-columns: 64px 1fr 64px;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-dialog-head strong {
+  color: #050505;
+  font-size: 18px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.note-dialog-head button {
+  min-height: 32px;
+  padding: 0;
+  color: #2e82f0;
+  background: transparent;
+  border: 0;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.note-dialog textarea {
+  width: 100%;
+  height: min(30svh, 220px);
+  min-height: 160px;
+  padding: 14px;
+  color: #050505;
+  resize: none;
+  background: #f7f7f7;
+  border: 0;
+  border-radius: 16px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.note-dialog textarea::placeholder {
+  color: #b0b0b0;
+}
+
+.note-confirm {
+  height: 56px;
+  color: #fff;
+  background: #2f83f6;
+  border-radius: 16px;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.note-history-dialog {
+  bottom: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 48svh;
+  max-height: 72svh;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  border-radius: 22px 22px 0 0;
+}
+
+.note-history-dialog .danger-text {
+  color: #f05c5c;
+}
+
+.note-history-list {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  margin-top: 16px;
+  overflow-y: auto;
+}
+
+.note-history-list button {
+  min-height: 46px;
+  padding: 12px 14px;
+  color: #050505;
+  background: #f7f7f7;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 850;
+  text-align: left;
+}
+
+.note-history-empty {
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+  color: #999;
+}
+
+.date-input-proxy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }

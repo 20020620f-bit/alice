@@ -1,55 +1,98 @@
 # 晴账
 
-一款可直接在 iPhone Safari 中添加到主屏幕的移动端记账 PWA。
+晴账是一款面向手机使用的轻量记账 PWA。项目是纯静态页面，可以直接部署到 GitHub Pages，也可以在 iPhone Safari 里添加到主屏幕使用。
 
-## 本机运行
+## 在线访问
+
+当前 GitHub Pages 地址：
+
+```text
+https://20020620f-bit.github.io/alice/
+```
+
+如果手机上看到旧页面，先刷新网页；如果已经添加到主屏幕，重新打开几次或等待浏览器缓存更新。
+
+## 主要功能
+
+- 月度支出、收入、预算进度展示
+- 首页消费卡片列表
+- 支出和收入记账
+- 分类分组：购物、吃喝、交通、娱乐、生活、收入
+- 分类名称和图标自定义
+- 数字键盘录入金额
+- 备注弹窗和历史备注
+- 流水搜索、筛选、编辑、删除
+- 图表分析和分类支出排行
+- 数据保存在当前设备浏览器本地
+
+## 本地运行
+
+在项目目录打开 PowerShell：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\serve.ps1 -Port 5173
 ```
 
-电脑和 iPhone 连接同一个 Wi-Fi 后，在 iPhone Safari 打开终端里显示的局域网地址，例如：
+电脑浏览器访问：
 
 ```text
-http://192.168.124.22:5173
+http://localhost:5173/
 ```
 
-然后使用 Safari 分享按钮，选择“添加到主屏幕”。
+iPhone 和电脑连接同一个 Wi-Fi 时，可以用终端里显示的局域网地址访问，例如：
 
-## 功能
+```text
+http://192.168.x.x:5173/
+```
 
-- 月度收入、支出、结余和预算进度
-- 新增、编辑、删除流水
-- 支出/收入分类、搜索和筛选
-- 分类占比图、最近 7 天趋势、支出排行
-- 本地浏览器保存数据
+## iPhone 安装到主屏幕
 
-## 说明
+1. 用 iPhone Safari 打开网页地址。
+2. 点击 Safari 底部分享按钮。
+3. 选择“添加到主屏幕”。
+4. 以后从桌面图标打开即可。
 
-当前版本不依赖 Node、Xcode 或后端服务。想发布成 TestFlight/App Store 原生安装包时，可以把这套界面迁移到 Expo/React Native，或用 Capacitor 封装成 iOS 项目后在 Mac 上打包。
+## 手动更新并发布
 
-## 部署到 GitHub Pages
-
-1. 在 GitHub 新建一个公开仓库，例如 `qing-ledger`。
-2. 在本项目目录执行：
+每次修改文件后，按这个顺序推送：
 
 ```powershell
-git remote add origin https://github.com/你的用户名/qing-ledger.git
-git branch -M main
-git push -u origin main
+git status
+git add .
+git status
+git commit -m "描述这次改了什么"
+git push
 ```
 
-3. 打开 GitHub 仓库：
+推送成功后，GitHub Pages 会自动部署。可以在仓库的 `Deployments` 或 `Actions` 页面查看是否有绿色对勾。
+
+## GitHub Pages 设置
+
+仓库第一次部署时需要设置：
+
+1. 打开仓库 `Settings`
+2. 进入 `Pages`
+3. `Source` 选择 `Deploy from a branch`
+4. `Branch` 选择 `main`
+5. 目录选择 `/(root)`
+6. 保存并等待部署完成
+
+## 数据说明
+
+当前版本没有后端服务器和账号系统。每个人打开网站后，账本数据保存在自己设备的浏览器本地，不会自动同步到别人手机，也不会同步到云端。
+
+如果清除浏览器数据、换手机、换浏览器，原来的本地账本可能不会保留。后续如果要多设备同步，需要再接入服务器或云数据库。
+
+## 文件结构
 
 ```text
-Settings -> Pages -> Build and deployment
+index.html              主页面结构
+styles.css              页面样式
+app.js                  记账逻辑和本地数据
+sw.js                   PWA 缓存
+manifest.webmanifest    添加到主屏幕配置
+assets/                 图标资源
+serve.ps1               本地静态服务器脚本
+ui-preview.html         UI 预览页
+ui-tuner.html           UI 尺寸调试页
 ```
-
-4. Source 选择 `Deploy from a branch`，Branch 选择 `main`，目录选择 `/root`，保存。
-5. 等 GitHub Actions/Pages 构建完成后，访问：
-
-```text
-https://你的用户名.github.io/qing-ledger/
-```
-
-如果页面没有立即更新，等 1-3 分钟后刷新。iPhone 上用 Safari 打开这个地址后，可以添加到主屏幕。

@@ -105,6 +105,16 @@ const elements = {
   amountInput: document.querySelector("#amountInput"),
   dateInput: document.querySelector("#dateInput"),
   noteInput: document.querySelector("#noteInput"),
+  noteTrigger: document.querySelector("#noteTrigger"),
+  notePreview: document.querySelector("#notePreview"),
+  noteDialog: document.querySelector("#noteDialog"),
+  noteTextarea: document.querySelector("#noteTextarea"),
+  confirmNote: document.querySelector("#confirmNote"),
+  openNoteHistory: document.querySelector("#openNoteHistory"),
+  noteHistoryDialog: document.querySelector("#noteHistoryDialog"),
+  noteHistoryList: document.querySelector("#noteHistoryList"),
+  clearNoteHistory: document.querySelector("#clearNoteHistory"),
+  confirmNoteHistory: document.querySelector("#confirmNoteHistory"),
   composerCategoryTabs: document.querySelector("#composerCategoryTabs"),
   categoryPicker: document.querySelector("#categoryPicker"),
   composerKeypad: document.querySelector("#composerKeypad"),
@@ -225,11 +235,25 @@ function normalizeCategories(savedCategories, entries = []) {
   return normalized;
 }
 
+function normalizeNoteHistory(savedHistory, entries = []) {
+  const source = Array.isArray(savedHistory) ? savedHistory : entries.map((entry) => entry.note);
+  const seen = new Set();
+  return source
+    .map((note) => String(note || "").trim())
+    .filter((note) => {
+      if (!note || seen.has(note)) return false;
+      seen.add(note);
+      return true;
+    })
+    .slice(0, 30);
+}
+
 function defaultState() {
   return {
     budget: 6800,
     categories: cloneCategories(),
-    entries: []
+    entries: [],
+    noteHistory: []
   };
 }
 
@@ -240,7 +264,8 @@ function loadState() {
       return {
         budget: Number(saved.budget) || 6800,
         categories: normalizeCategories(saved.categories, saved.entries),
-        entries: saved.entries
+        entries: saved.entries,
+        noteHistory: normalizeNoteHistory(saved.noteHistory, saved.entries)
       };
     }
   } catch (error) {
@@ -835,6 +860,7 @@ function openComposer(options = {}) {
   elements.amountInput.value = entry ? entry.amount : "";
   elements.dateInput.value = entry ? entry.date : todayISO();
   elements.noteInput.value = entry ? entry.note || "" : "";
+  renderNotePreview();
   elements.composerSheet.classList.add("open");
   elements.composerSheet.setAttribute("aria-hidden", "false");
 }
@@ -849,8 +875,110 @@ function resetForm() {
   elements.amountInput.value = "";
   elements.noteInput.value = "";
   elements.dateInput.value = todayISO();
+  renderNotePreview();
   selectedCategory = visibleComposerCategories()[0]?.id || getCategoryList(entryType)[0]?.id;
   renderCategoryPicker();
+}
+
+function renderNotePreview() {
+  const note = elements.noteInput.value.trim();
+  elements.notePreview.textContent = note || "可选";
+  elements.notePreview.classList.toggle("has-note", Boolean(note));
+}
+
+function openNoteDialog() {
+  elements.noteTextarea.value = elements.noteInput.value;
+  elements.noteDialog.classList.add("open");
+  elements.noteDialog.setAttribute("aria-hidden", "false");
+  window.setTimeout(() => elements.noteTextarea.focus(), 80);
+}
+
+function closeNoteDialog() {
+  elements.noteDialog.classList.remove("open");
+  elements.noteDialog.setAttribute("aria-hidden", "true");
+}
+
+function confirmNote() {
+  elements.noteInput.value = elements.noteTextarea.value.trim();
+  renderNotePreview();
+  closeNoteDialog();
+}
+
+function noteHistoryItems() {
+  return normalizeNoteHistory(state.noteHistory, []);
+}
+
+function rememberNote(note) {
+  const trimmed = String(note || "").trim();
+  if (!trimmed) return;
+  state.noteHistory = normalizeNoteHistory([trimmed, ...noteHistoryItems()], []);
+}
+
+function renderNoteHistory() {
+  const notes = noteHistoryItems();
+  if (!notes.length) {
+    elements.noteHistoryList.innerHTML = `<div class="empty-state note-history-empty">暂无历史备注</div>`;
+    return;
+  }
+
+  elements.noteHistoryList.innerHTML = notes
+    .map((note) => `
+      <button type="button" data-note-history="${escapeHTML(note)}">
+        ${escapeHTML(note)}
+      </button>
+    `)
+    .join("");
+}
+
+function openNoteHistoryDialog() {
+  closeNoteDialog();
+  renderNoteHistory();
+  elements.noteHistoryDialog.classList.add("open");
+  elements.noteHistoryDialog.setAttribute("aria-hidden", "false");
+}
+
+function closeNoteHistoryDialog() {
+  elements.noteHistoryDialog.classList.remove("open");
+  elements.noteHistoryDialog.setAttribute("aria-hidden", "true");
+}
+
+function clearNoteHistory() {
+  state.noteHistory = [];
+  saveState();
+  renderNoteHistory();
+}
+
+function setNoteFromHistory(note) {
+  elements.noteInput.value = note;
+  renderNotePreview();
+  closeNoteHistoryDialog();
+}
+
+function formatDateLabel(dateText) {
+  if (!dateText) return "今天";
+  const date = new Date(`${dateText}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "今天";
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+}
+
+function openDatePicker() {
+  elements.dateInput.value = elements.dateInput.value || todayISO();
+  try {
+    if (typeof elements.dateInput.showPicker === "function") {
+      elements.dateInput.showPicker();
+      return;
+    }
+  } catch (error) {
+    console.warn("Date picker is not available", error);
+  }
+  try {
+    elements.dateInput.focus();
+    elements.dateInput.click();
+    return;
+  } catch (error) {
+    console.warn("Date input click failed", error);
+  }
+  showToast(`日期：${formatDateLabel(elements.dateInput.value)}`);
 }
 
 function appendAmountToken(token) {
@@ -889,7 +1017,7 @@ function handleKeypadAction(action) {
     return;
   }
   if (action === "today") {
-    elements.dateInput.value = todayISO();
+    openDatePicker();
     return;
   }
   if (action === "save") {
@@ -935,6 +1063,7 @@ function handleSubmit(event) {
     activeMonth = firstDayOfMonth(new Date(`${date}T00:00:00`));
   }
 
+  rememberNote(entry.note);
   saveState();
   closeComposer();
   render();
@@ -1016,6 +1145,27 @@ function bindEvents() {
     const button = event.target.closest("[data-key]");
     if (!button) return;
     handleKeypadAction(button.dataset.key);
+  });
+  elements.noteTrigger.addEventListener("click", openNoteDialog);
+  elements.confirmNote.addEventListener("click", confirmNote);
+  elements.openNoteHistory.addEventListener("click", openNoteHistoryDialog);
+  elements.clearNoteHistory.addEventListener("click", clearNoteHistory);
+  elements.confirmNoteHistory.addEventListener("click", closeNoteHistoryDialog);
+  elements.noteHistoryList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-note-history]");
+    if (!button) return;
+    setNoteFromHistory(button.dataset.noteHistory);
+  });
+  elements.dateInput.addEventListener("change", () => {
+    showToast(`日期：${formatDateLabel(elements.dateInput.value)}`);
+  });
+
+  document.querySelectorAll("[data-close-note-dialog]").forEach((control) => {
+    control.addEventListener("click", closeNoteDialog);
+  });
+
+  document.querySelectorAll("[data-close-note-history]").forEach((control) => {
+    control.addEventListener("click", closeNoteHistoryDialog);
   });
 
   document.querySelectorAll("[data-close-sheet]").forEach((control) => {
@@ -1114,6 +1264,14 @@ function bindEvents() {
   });
 
   window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && elements.noteHistoryDialog.classList.contains("open")) {
+      closeNoteHistoryDialog();
+      return;
+    }
+    if (event.key === "Escape" && elements.noteDialog.classList.contains("open")) {
+      closeNoteDialog();
+      return;
+    }
     if (event.key === "Escape" && elements.categorySheet.classList.contains("open")) {
       closeCategoryManager();
       return;
