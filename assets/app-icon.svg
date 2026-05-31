@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="晴账">
+  <rect width="512" height="512" rx="96" fill="#f4f6ef"/>
+  <path d="M110 166c0-35.3 28.7-64 64-64h164c35.3 0 64 28.7 64 64v180c0 35.3-28.7 64-64 64H174c-35.3 0-64-28.7-64-64V166Z" fill="#17332c"/>
+  <path d="M158 194h196c23.2 0 42 18.8 42 42v82c0 23.2-18.8 42-42 42H158V194Z" fill="#fffef8"/>
+  <path d="M316 244h80v66h-80c-18.2 0-33-14.8-33-33s14.8-33 33-33Z" fill="#d8eee7"/>
+  <circle cx="318" cy="277" r="14" fill="#0b8068"/>
+  <path d="M166 167 326 127c19.8-4.9 39.8 7.1 44.7 26.9L378 183H166v-16Z" fill="#e45d4f"/>
+  <path d="M167 221h82" stroke="#17332c" stroke-width="24" stroke-linecap="round"/>
+  <path d="M167 278h56" stroke="#c39122" stroke-width="24" stroke-linecap="round"/>
+</svg>

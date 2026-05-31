@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>晴账布局调节器</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
+        --ink: #151515;
+        --muted: #6d746f;
+        --line: #dfe4dc;
+        --panel: #ffffff;
+        --bg: #f5f7f3;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--bg);
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .tuner {
+        display: grid;
+        grid-template-columns: minmax(320px, 390px) 1fr;
+        min-height: 100vh;
+      }
+
+      .controls {
+        height: 100vh;
+        overflow: auto;
+        padding: 18px;
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+      }
+
+      .controls h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+
+      .controls p {
+        margin: 8px 0 18px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .toolbar button,
+      .copy {
+        min-height: 38px;
+        color: #fff;
+        background: #17211d;
+        border: 0;
+        border-radius: 8px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .toolbar button.secondary {
+        color: var(--ink);
+        background: #edf1ea;
+      }
+
+      .group {
+        padding: 14px;
+        margin-bottom: 12px;
+        background: #fbfcf9;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+
+      .group h2 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+
+      .control {
+        display: grid;
+        gap: 7px;
+        margin-top: 12px;
+      }
+
+      .control:first-of-type {
+        margin-top: 0;
+      }
+
+      .control label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .control output {
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .control input[type="range"] {
+        width: 100%;
+        accent-color: #0b8068;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 10px;
+        color: var(--ink);
+        background: #f7f9f5;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.5;
+        resize: vertical;
+      }
+
+      .stage {
+        display: grid;
+        place-items: start center;
+        min-width: 0;
+        padding: 20px;
+        overflow: auto;
+      }
+
+      .phone-frame {
+        width: min(100%, 430px);
+        min-height: 760px;
+        overflow: hidden;
+        background: #fff;
+        border: 10px solid #161616;
+        border-radius: 34px;
+        box-shadow: 0 24px 70px rgba(20, 26, 23, 0.16);
+      }
+
+      iframe {
+        display: block;
+        width: 100%;
+        height: 760px;
+        border: 0;
+      }
+
+      .hint {
+        width: min(100%, 430px);
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 920px) {
+        .tuner {
+          grid-template-columns: 1fr;
+        }
+
+        .controls {
+          height: auto;
+          max-height: none;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .stage {
+          padding: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="tuner">
+      <section class="controls">
+        <h1>布局大小调节器</h1>
+        <p>这里不会改正式代码，只实时调整右侧预览。调好后复制底部参数发给我。</p>
+
+        <div class="toolbar">
+          <button type="button" data-preset="compact">紧凑</button>
+          <button class="secondary" type="button" data-preset="comfortable">舒适</button>
+          <button class="secondary" type="button" data-preset="tiny">更小</button>
+          <button class="secondary" type="button" id="reset">重置</button>
+        </div>
+
+        <div class="group" id="controlGroups"></div>
+
+        <div class="group">
+          <h2>复制给 Codex</h2>
+          <textarea id="exportText" readonly></textarea>
+          <button class="copy" type="button" id="copy">复制参数</button>
+        </div>
+      </section>
+
+      <section class="stage">
+        <div class="phone-frame">
+          <iframe id="preview" src="index.html" title="晴账预览"></iframe>
+        </div>
+        <div class="hint">如果右侧仍显示旧尺寸，点“重置”或刷新本页。正式 App 不会被这个页面保存修改。</div>
+      </section>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "qing-layout-tuner-v1";
+      const controls = [
+        { key: "topbarHeight", label: "顶部栏高度", min: 42, max: 72, step: 1, value: 52, unit: "px", group: "顶部" },
+        { key: "contentPad", label: "左右边距", min: 8, max: 24, step: 1, value: 12, unit: "px", group: "整体" },
+        { key: "summaryPad", label: "收支区上边距", min: 4, max: 28, step: 1, value: 12, unit: "px", group: "整体" },
+        { key: "labelFont", label: "月支出标题字号", min: 12, max: 22, step: 1, value: 16, unit: "px", group: "收支" },
+        { key: "amountFont", label: "月金额字号", min: 18, max: 34, step: 1, value: 22, unit: "px", group: "收支" },
+        { key: "ringSize", label: "圆环直径", min: 120, max: 260, step: 2, value: 176, unit: "px", group: "圆环" },
+        { key: "ringBorder", label: "圆环边框", min: 1, max: 4, step: 0.25, value: 1.5, unit: "px", group: "圆环" },
+        { key: "coreInset", label: "圆心留白", min: 21, max: 31, step: 0.5, value: 25.5, unit: "%", group: "圆环" },
+        { key: "coreTitle", label: "圆心标题字号", min: 11, max: 20, step: 1, value: 13, unit: "px", group: "圆环" },
+        { key: "coreAmount", label: "圆心金额字号", min: 15, max: 30, step: 1, value: 19, unit: "px", group: "圆环" },
+        { key: "budgetPad", label: "预算卡内边距", min: 6, max: 18, step: 1, value: 8, unit: "px", group: "预算" },
+        { key: "cardRadius", label: "流水卡圆角", min: 6, max: 18, step: 1, value: 10, unit: "px", group: "流水" },
+        { key: "cardHeadFont", label: "日期标题字号", min: 12, max: 22, step: 1, value: 14, unit: "px", group: "流水" },
+        { key: "entryFont", label: "流水分类字号", min: 12, max: 22, step: 1, value: 14, unit: "px", group: "流水" },
+        { key: "entryIcon", label: "流水图标尺寸", min: 24, max: 50, step: 1, value: 30, unit: "px", group: "流水" },
+        { key: "entryPad", label: "流水行内边距", min: 6, max: 18, step: 1, value: 9, unit: "px", group: "流水" },
+        { key: "catWidth", label: "快捷分类宽度", min: 76, max: 140, step: 2, value: 88, unit: "px", group: "分类" },
+        { key: "fabSize", label: "加号尺寸", min: 42, max: 76, step: 1, value: 50, unit: "px", group: "加号" }
+      ];
+
+      const presets = {
+        compact: {},
+        comfortable: {
+          topbarHeight: 58,
+          contentPad: 14,
+          summaryPad: 17,
+          labelFont: 18,
+          amountFont: 25,
+          ringSize: 232,
+          ringBorder: 1.5,
+          coreInset: 24,
+          coreTitle: 15,
+          coreAmount: 23,
+          budgetPad: 10,
+          cardRadius: 12,
+          cardHeadFont: 16,
+          entryFont: 16,
+          entryIcon: 36,
+          entryPad: 11,
+          catWidth: 102,
+          fabSize: 58
+        },
+        tiny: {
+          topbarHeight: 48,
+          contentPad: 10,
+          summaryPad: 8,
+          labelFont: 14,
+          amountFont: 20,
+          ringSize: 148,
+          ringBorder: 1.25,
+          coreInset: 27,
+          coreTitle: 12,
+          coreAmount: 17,
+          budgetPad: 7,
+          cardRadius: 8,
+          cardHeadFont: 13,
+          entryFont: 13,
+          entryIcon: 28,
+          entryPad: 8,
+          catWidth: 80,
+          fabSize: 46
+        }
+      };
+
+      const state = Object.fromEntries(controls.map((control) => [control.key, control.value]));
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (saved) Object.assign(state, saved);
+
+      const controlGroups = document.querySelector("#controlGroups");
+      const exportText = document.querySelector("#exportText");
+      const iframe = document.querySelector("#preview");
+
+      function groupedControls() {
+        const groups = new Map();
+        controls.forEach((control) => {
+          if (!groups.has(control.group)) groups.set(control.group, []);
+          groups.get(control.group).push(control);
+        });
+        return groups;
+      }
+
+      function renderControls() {
+        controlGroups.innerHTML = [...groupedControls().entries()]
+          .map(([group, rows]) => `
+            <h2>${group}</h2>
+            ${rows.map((control) => `
+              <div class="control">
+                <label for="${control.key}">
+                  <span>${control.label}</span>
+                  <output id="${control.key}Value">${state[control.key]}${control.unit}</output>
+                </label>
+                <input
+                  id="${control.key}"
+                  type="range"
+                  min="${control.min}"
+                  max="${control.max}"
+                  step="${control.step}"
+                  value="${state[control.key]}"
+                  data-key="${control.key}"
+                >
+              </div>
+            `).join("")}
+          `)
+          .join("");
+      }
+
+      function cssFor(values) {
+        return `
+html, body, button, input { font-family: "Microsoft YaHei", "微软雅黑", sans-serif !important; }
+body:has(#view-overview.active) .topbar { min-height: ${values.topbarHeight}px; padding: calc(6px + env(safe-area-inset-top)) 12px 6px; }
+body:has(#view-overview.active) .content { padding: 0 ${values.contentPad}px; }
+body:has(#view-overview.active) .month-ledger { padding: ${values.summaryPad}px 0 0; }
+body:has(#view-overview.active) .month-total span { font-size: ${values.labelFont}px; }
+body:has(#view-overview.active) .month-total strong { font-size: ${values.amountFont}px; }
+body:has(#view-overview.active) .spend-orbit { width: ${values.ringSize}px; }
+body:has(#view-overview.active) .spend-stage .saving-ring { border-width: ${values.ringBorder}px; }
+body:has(#view-overview.active) .spend-core { inset: ${values.coreInset}%; border-width: ${values.ringBorder}px; }
+body:has(#view-overview.active) .spend-core div span { font-size: ${values.coreTitle}px; }
+body:has(#view-overview.active) .spend-core strong { font-size: ${values.coreAmount}px; }
+body:has(#view-overview.active) .compact-budget { padding: ${values.budgetPad}px ${values.budgetPad + 2}px; }
+body:has(#view-overview.active) .day-card { border-radius: ${values.cardRadius}px; }
+body:has(#view-overview.active) .day-card-head strong,
+body:has(#view-overview.active) .day-card-head span { font-size: ${values.cardHeadFont}px; }
+body:has(#view-overview.active) .day-entry { grid-template-columns: ${values.entryIcon}px 1fr auto; padding: ${values.entryPad}px ${values.entryPad + 1}px; }
+body:has(#view-overview.active) .day-entry .category-icon { width: ${values.entryIcon}px; height: ${values.entryIcon}px; }
+body:has(#view-overview.active) .day-entry .category-icon svg { width: ${Math.round(values.entryIcon * 0.53)}px; height: ${Math.round(values.entryIcon * 0.53)}px; }
+body:has(#view-overview.active) .day-entry-main strong { font-size: ${values.entryFont}px; }
+body:has(#view-overview.active) .category-strip { grid-auto-columns: minmax(${values.catWidth}px, 1fr); }
+body:has(#view-overview.active) .fab { width: ${values.fabSize}px; height: ${values.fabSize}px; }
+body:has(#view-overview.active) .fab svg { width: ${Math.round(values.fabSize * 0.54)}px; height: ${Math.round(values.fabSize * 0.54)}px; }
+        `.trim();
+      }
+
+      function injectCss() {
+        const doc = iframe.contentDocument;
+        if (!doc) return;
+        let style = doc.querySelector("#layout-tuner-style");
+        if (!style) {
+          style = doc.createElement("style");
+          style.id = "layout-tuner-style";
+          doc.head.appendChild(style);
+        }
+        style.textContent = cssFor(state);
+      }
+
+      function updateExport() {
+        exportText.value = JSON.stringify(state, null, 2);
+      }
+
+      function update() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        controls.forEach((control) => {
+          const output = document.querySelector(`#${control.key}Value`);
+          if (output) output.textContent = `${state[control.key]}${control.unit}`;
+        });
+        injectCss();
+        updateExport();
+      }
+
+      renderControls();
+      updateExport();
+
+      controlGroups.addEventListener("input", (event) => {
+        const key = event.target.dataset.key;
+        if (!key) return;
+        state[key] = Number(event.target.value);
+        update();
+      });
+
+      document.querySelectorAll("[data-preset]").forEach((button) => {
+        button.addEventListener("click", () => {
+          controls.forEach((control) => {
+            state[control.key] = presets[button.dataset.preset][control.key] ?? control.value;
+          });
+          renderControls();
+          update();
+        });
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        controls.forEach((control) => {
+          state[control.key] = control.value;
+        });
+        renderControls();
+        update();
+      });
+
+      document.querySelector("#copy").addEventListener("click", async () => {
+        exportText.select();
+        try {
+          await navigator.clipboard.writeText(exportText.value);
+        } catch {
+          document.execCommand("copy");
+        }
+      });
+
+      iframe.addEventListener("load", () => {
+        window.setTimeout(injectCss, 200);
+      });
+    </script>
+  </body>
+</html>

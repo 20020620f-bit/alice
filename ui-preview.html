@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>晴账 UI 方案预览</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #eef1ed;
+        --ink: #17211d;
+        --muted: #6b746e;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--page);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .preview-page {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 28px 18px 44px;
+      }
+
+      .preview-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 22px;
+      }
+
+      .preview-header h1 {
+        margin: 0;
+        font-size: 30px;
+        letter-spacing: 0;
+      }
+
+      .preview-header p {
+        max-width: 520px;
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .option {
+        min-width: 0;
+      }
+
+      .option-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 48px;
+        margin-bottom: 10px;
+      }
+
+      .option-title h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .option-title span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .choose {
+        height: 36px;
+        padding: 0 12px;
+        color: #fff;
+        background: #15231f;
+        border: 0;
+        border-radius: 8px;
+        font-weight: 800;
+      }
+
+      .phone {
+        position: relative;
+        width: 100%;
+        max-width: 390px;
+        min-height: 760px;
+        margin: 0 auto;
+        overflow: hidden;
+        border: 8px solid #151917;
+        border-radius: 34px;
+        box-shadow: 0 24px 70px rgba(20, 26, 23, 0.18);
+      }
+
+      .phone::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        z-index: 4;
+        width: 94px;
+        height: 25px;
+        background: #151917;
+        border-radius: 0 0 16px 16px;
+        transform: translateX(-50%);
+      }
+
+      .screen {
+        min-height: 744px;
+        padding: 42px 16px 18px;
+      }
+
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .top small,
+      .label {
+        display: block;
+        color: inherit;
+        opacity: 0.62;
+        font-size: 12px;
+      }
+
+      .top strong {
+        display: block;
+        margin-top: 3px;
+        font-size: 19px;
+      }
+
+      .avatar,
+      .icon-btn,
+      .cat-icon,
+      .nav-btn {
+        display: grid;
+        place-items: center;
+      }
+
+      .avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        font-weight: 900;
+      }
+
+      .icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+      }
+
+      .hero {
+        margin-bottom: 12px;
+        padding: 18px;
+        border-radius: 12px;
+      }
+
+      .hero .amount {
+        display: block;
+        margin-top: 8px;
+        font-size: 40px;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .hero-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .ring {
+        --value: 270deg;
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: conic-gradient(var(--accent) var(--value), rgba(255, 255, 255, 0.22) 0);
+      }
+
+      .ring span {
+        display: grid;
+        place-items: center;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        font-weight: 900;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .stat {
+        min-width: 0;
+        padding: 12px 10px;
+        border-radius: 10px;
+      }
+
+      .stat strong {
+        display: block;
+        margin-top: 5px;
+        overflow-wrap: anywhere;
+        font-size: 16px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 16px 0 10px;
+      }
+
+      .section-head strong {
+        font-size: 16px;
+      }
+
+      .section-head span {
+        color: inherit;
+        opacity: 0.58;
+        font-size: 12px;
+      }
+
+      .category-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .category {
+        min-width: 0;
+        padding: 12px 10px;
+        border-radius: 10px;
+      }
+
+      .cat-icon {
+        width: 34px;
+        height: 34px;
+        margin-bottom: 9px;
+        border-radius: 10px;
+        font-size: 17px;
+      }
+
+      .category small {
+        display: block;
+        opacity: 0.62;
+      }
+
+      .category strong {
+        display: block;
+        margin-top: 3px;
+        font-size: 15px;
+      }
+
+      .list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .tx {
+        display: grid;
+        grid-template-columns: 42px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 11px;
+        border-radius: 10px;
+      }
+
+      .tx-main {
+        min-width: 0;
+      }
+
+      .tx-main strong,
+      .tx-main span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tx-main span {
+        margin-top: 3px;
+        opacity: 0.58;
+        font-size: 12px;
+      }
+
+      .tx-amount {
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .nav {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        left: 14px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 7px;
+        border-radius: 16px;
+      }
+
+      .nav-btn {
+        min-height: 48px;
+        border-radius: 12px;
+        font-size: 18px;
+      }
+
+      .nav-btn span {
+        display: block;
+        margin-top: 2px;
+        font-size: 10px;
+      }
+
+      .screen-a {
+        --accent: #0b8068;
+        background: #f5f7f0;
+      }
+
+      .screen-a .avatar,
+      .screen-a .icon-btn,
+      .screen-a .nav {
+        background: #fffef8;
+        border: 1px solid #dde3d7;
+      }
+
+      .screen-a .avatar {
+        color: #0b8068;
+        background: #d8eee7;
+      }
+
+      .screen-a .hero {
+        color: #f7fbf6;
+        background: #17332c;
+      }
+
+      .screen-a .ring span {
+        background: #17332c;
+      }
+
+      .screen-a .stat,
+      .screen-a .category,
+      .screen-a .tx {
+        background: #fffef8;
+        border: 1px solid #dde3d7;
+      }
+
+      .screen-a .cat-icon {
+        color: #0b8068;
+        background: #d8eee7;
+      }
+
+      .screen-a .nav-btn {
+        color: #657067;
+        background: transparent;
+        border: 0;
+      }
+
+      .screen-a .nav-btn.active {
+        color: #0b8068;
+        background: #d8eee7;
+      }
+
+      .screen-b {
+        --accent: #9bd7ff;
+        color: #eef6ff;
+        background: #0f141b;
+      }
+
+      .screen-b .top {
+        color: #eef6ff;
+      }
+
+      .screen-b .avatar,
+      .screen-b .icon-btn,
+      .screen-b .stat,
+      .screen-b .category,
+      .screen-b .tx,
+      .screen-b .nav {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .screen-b .avatar {
+        color: #0f141b;
+        background: #9bd7ff;
+      }
+
+      .screen-b .hero {
+        background: linear-gradient(135deg, #243c7a 0%, #0b8068 58%, #c39122 100%);
+        box-shadow: 0 18px 45px rgba(12, 22, 32, 0.35);
+      }
+
+      .screen-b .ring span {
+        color: #eef6ff;
+        background: rgba(15, 20, 27, 0.78);
+      }
+
+      .screen-b .cat-icon {
+        color: #0f141b;
+        background: #9bd7ff;
+      }
+
+      .screen-b .nav-btn {
+        color: rgba(238, 246, 255, 0.62);
+        background: transparent;
+        border: 0;
+      }
+
+      .screen-b .nav-btn.active {
+        color: #0f141b;
+        background: #9bd7ff;
+      }
+
+      .screen-c {
+        --accent: #ffb45f;
+        background: #f7f0e6;
+      }
+
+      .screen-c .top {
+        padding: 12px;
+        background: #fff9ef;
+        border: 1px solid #eadccb;
+        border-radius: 14px;
+      }
+
+      .screen-c .avatar {
+        color: #f7f0e6;
+        background: #1d2b35;
+      }
+
+      .screen-c .icon-btn {
+        background: #f0e2d0;
+        border: 1px solid #e0cfba;
+      }
+
+      .screen-c .hero {
+        color: #17211d;
+        background: #fff9ef;
+        border: 1px solid #eadccb;
+      }
+
+      .screen-c .hero .amount {
+        color: #1d2b35;
+      }
+
+      .screen-c .ring {
+        background: conic-gradient(#ffb45f 270deg, #e7d6bf 0);
+      }
+
+      .screen-c .ring span {
+        background: #fff9ef;
+      }
+
+      .screen-c .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .screen-c .stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fff9ef;
+        border: 1px solid #eadccb;
+      }
+
+      .screen-c .category {
+        color: #fff9ef;
+        background: #1d2b35;
+      }
+
+      .screen-c .cat-icon {
+        color: #17211d;
+        background: #ffb45f;
+      }
+
+      .screen-c .tx {
+        background: #fff9ef;
+        border: 1px solid #eadccb;
+      }
+
+      .screen-c .nav {
+        background: #1d2b35;
+      }
+
+      .screen-c .nav-btn {
+        color: rgba(255, 249, 239, 0.65);
+        background: transparent;
+        border: 0;
+      }
+
+      .screen-c .nav-btn.active {
+        color: #17211d;
+        background: #ffb45f;
+      }
+
+      .selected .phone {
+        outline: 4px solid #0b8068;
+        outline-offset: 5px;
+      }
+
+      @media (max-width: 1020px) {
+        .preview-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .preview-header {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="preview-page">
+      <header class="preview-header">
+        <div>
+          <h1>晴账 UI 方案</h1>
+          <p>先选视觉方向，我再把正式 App 改成对应风格。</p>
+        </div>
+      </header>
+
+      <section class="preview-grid" id="options">
+        <article class="option" data-option="A">
+          <div class="option-title">
+            <div>
+              <h2>A · 清爽效率型</h2>
+              <span>适合长期记账，耐看、信息密度高</span>
+            </div>
+            <button class="choose" type="button">选择 A</button>
+          </div>
+          <div class="phone">
+            <div class="screen screen-a">
+              <div class="top">
+                <div class="avatar">晴</div>
+                <div>
+                  <small>2026 年 5 月</small>
+                  <strong>本月总览</strong>
+                </div>
+                <div class="icon-btn">↗</div>
+              </div>
+              <section class="hero">
+                <div class="hero-row">
+                  <div>
+                    <span class="label">月结余</span>
+                    <strong class="amount">¥10,875</strong>
+                  </div>
+                  <div class="ring"><span>84%</span></div>
+                </div>
+              </section>
+              <div class="stats">
+                <div class="stat"><span class="label">收入</span><strong>¥13,400</strong></div>
+                <div class="stat"><span class="label">支出</span><strong>¥2,525</strong></div>
+                <div class="stat"><span class="label">预算</span><strong>¥4,275</strong></div>
+              </div>
+              <div class="section-head"><strong>常用分类</strong><span>本月支出</span></div>
+              <div class="category-row">
+                <div class="category"><div class="cat-icon">食</div><small>食品餐饮</small><strong>¥168</strong></div>
+                <div class="category"><div class="cat-icon">缴</div><small>生活缴费</small><strong>¥2,480</strong></div>
+                <div class="category"><div class="cat-icon">医</div><small>医疗健康</small><strong>¥126</strong></div>
+              </div>
+              <div class="section-head"><strong>最近流水</strong><span>全部</span></div>
+              <div class="list">
+                <div class="tx"><div class="cat-icon">行</div><div class="tx-main"><strong>交通出行</strong><span>今日 · 通勤</span></div><div class="tx-amount">-¥42</div></div>
+                <div class="tx"><div class="cat-icon">食</div><div class="tx-main"><strong>食品餐饮</strong><span>昨日 · 晚餐</span></div><div class="tx-amount">-¥168</div></div>
+                <div class="tx"><div class="cat-icon">薪</div><div class="tx-main"><strong>工资</strong><span>5/1 · 月薪</span></div><div class="tx-amount">+¥12,800</div></div>
+              </div>
+              <nav class="nav">
+                <button class="nav-btn active" type="button">⌂<span>总览</span></button>
+                <button class="nav-btn" type="button">≡<span>流水</span></button>
+                <button class="nav-btn" type="button">＋<span>记账</span></button>
+                <button class="nav-btn" type="button">⌁<span>分析</span></button>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article class="option" data-option="B">
+          <div class="option-title">
+            <div>
+              <h2>B · 深色高级型</h2>
+              <span>更像金融工具，视觉冲击更强</span>
+            </div>
+            <button class="choose" type="button">选择 B</button>
+          </div>
+          <div class="phone">
+            <div class="screen screen-b">
+              <div class="top">
+                <div class="avatar">¥</div>
+                <div>
+                  <small>Wallet Focus</small>
+                  <strong>晴账</strong>
+                </div>
+                <div class="icon-btn">⌁</div>
+              </div>
+              <section class="hero">
+                <div class="hero-row">
+                  <div>
+                    <span class="label">Available Balance</span>
+                    <strong class="amount">¥10,875</strong>
+                  </div>
+                  <div class="ring"><span>84%</span></div>
+                </div>
+              </section>
+              <div class="stats">
+                <div class="stat"><span class="label">Income</span><strong>¥13,400</strong></div>
+                <div class="stat"><span class="label">Spent</span><strong>¥2,525</strong></div>
+                <div class="stat"><span class="label">Left</span><strong>¥4,275</strong></div>
+              </div>
+              <div class="section-head"><strong>分类占比</strong><span>May</span></div>
+              <div class="category-row">
+                <div class="category"><div class="cat-icon">缴</div><small>生活缴费</small><strong>64%</strong></div>
+                <div class="category"><div class="cat-icon">购</div><small>购物消费</small><strong>16%</strong></div>
+                <div class="category"><div class="cat-icon">食</div><small>食品餐饮</small><strong>7%</strong></div>
+              </div>
+              <div class="section-head"><strong>最近流水</strong><span>View all</span></div>
+              <div class="list">
+                <div class="tx"><div class="cat-icon">房</div><div class="tx-main"><strong>房租水电</strong><span>May 26 · 账单</span></div><div class="tx-amount">-¥2,480</div></div>
+                <div class="tx"><div class="cat-icon">餐</div><div class="tx-main"><strong>晚餐</strong><span>May 27 · 餐饮</span></div><div class="tx-amount">-¥168</div></div>
+                <div class="tx"><div class="cat-icon">奖</div><div class="tx-main"><strong>项目奖金</strong><span>May 18 · 收入</span></div><div class="tx-amount">+¥600</div></div>
+              </div>
+              <nav class="nav">
+                <button class="nav-btn active" type="button">⌂<span>Home</span></button>
+                <button class="nav-btn" type="button">◎<span>Stats</span></button>
+                <button class="nav-btn" type="button">＋<span>Add</span></button>
+                <button class="nav-btn" type="button">≡<span>List</span></button>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article class="option" data-option="C">
+          <div class="option-title">
+            <div>
+              <h2>C · 手账生活型</h2>
+              <span>更有温度，适合个人消费记录</span>
+            </div>
+            <button class="choose" type="button">选择 C</button>
+          </div>
+          <div class="phone">
+            <div class="screen screen-c">
+              <div class="top">
+                <div class="avatar">Q</div>
+                <div>
+                  <small>May Ledger</small>
+                  <strong>今天也记一笔</strong>
+                </div>
+                <div class="icon-btn">＋</div>
+              </div>
+              <section class="hero">
+                <div class="hero-row">
+                  <div>
+                    <span class="label">本月结余</span>
+                    <strong class="amount">¥10,875</strong>
+                  </div>
+                  <div class="ring"><span>84%</span></div>
+                </div>
+              </section>
+              <div class="stats">
+                <div class="stat"><span class="label">收入</span><strong>¥13,400</strong></div>
+                <div class="stat"><span class="label">支出</span><strong>¥2,525</strong></div>
+                <div class="stat"><span class="label">预算剩余</span><strong>¥4,275</strong></div>
+              </div>
+              <div class="section-head"><strong>这个月的钱花在哪</strong><span>排行</span></div>
+              <div class="category-row">
+                <div class="category"><div class="cat-icon">缴</div><small>生活缴费</small><strong>¥2,480</strong></div>
+                <div class="category"><div class="cat-icon">日</div><small>日用百货</small><strong>¥389</strong></div>
+                <div class="category"><div class="cat-icon">医</div><small>医疗健康</small><strong>¥126</strong></div>
+              </div>
+              <div class="section-head"><strong>今天附近</strong><span>3 笔</span></div>
+              <div class="list">
+                <div class="tx"><div class="cat-icon">行</div><div class="tx-main"><strong>通勤</strong><span>今天 · 交通</span></div><div class="tx-amount">-¥42</div></div>
+                <div class="tx"><div class="cat-icon">餐</div><div class="tx-main"><strong>晚餐</strong><span>昨天 · 餐饮</span></div><div class="tx-amount">-¥168</div></div>
+                <div class="tx"><div class="cat-icon">购</div><div class="tx-main"><strong>日用品</strong><span>5/23 · 购物</span></div><div class="tx-amount">-¥389</div></div>
+              </div>
+              <nav class="nav">
+                <button class="nav-btn active" type="button">⌂<span>首页</span></button>
+                <button class="nav-btn" type="button">✎<span>记账</span></button>
+                <button class="nav-btn" type="button">◎<span>分析</span></button>
+                <button class="nav-btn" type="button">≡<span>流水</span></button>
+              </nav>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      document.querySelectorAll(".choose").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".option").forEach((option) => option.classList.remove("selected"));
+          const option = button.closest(".option");
+          option.classList.add("selected");
+          button.textContent = "已选择 " + option.dataset.option;
+        });
+      });
+    </script>
+  </body>
+</html>
