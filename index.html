@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="assets/app-icon-180.png">
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.css?v=14">
+    <link rel="stylesheet" href="styles.css?v=15">
   </head>
   <body>
     <svg class="sprite" aria-hidden="true">
@@ -467,7 +467,7 @@
             <button type="button" data-key="today">今天</button>
           </div>
         </div>
-        <input class="date-input-proxy" id="dateInput" name="date" type="date" required aria-label="选择日期">
+        <input id="dateInput" name="date" type="hidden">
       </form>
     </section>
 
@@ -534,8 +534,37 @@
       </div>
     </section>
 
+    <section class="modal-layer" id="dateDialog" aria-hidden="true" aria-labelledby="dateDialogTitle">
+      <div class="modal-backdrop" data-close-date-dialog></div>
+      <div class="date-dialog" role="dialog" aria-modal="true">
+        <header class="date-dialog-head">
+          <button class="icon-button" id="datePrevMonth" type="button" aria-label="上个月">
+            <svg><use href="#icon-left"></use></svg>
+          </button>
+          <strong id="dateDialogTitle">选择日期</strong>
+          <button class="icon-button" id="dateNextMonth" type="button" aria-label="下个月">
+            <svg><use href="#icon-right"></use></svg>
+          </button>
+        </header>
+        <div class="date-weekdays" aria-hidden="true">
+          <span>日</span>
+          <span>一</span>
+          <span>二</span>
+          <span>三</span>
+          <span>四</span>
+          <span>五</span>
+          <span>六</span>
+        </div>
+        <div class="date-grid" id="dateGrid" aria-label="选择日期"></div>
+        <div class="date-dialog-actions">
+          <button type="button" id="dateUseToday">今天</button>
+          <button type="button" id="confirmDate">确定</button>
+        </div>
+      </div>
+    </section>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="app.js?v=14"></script>
+    <script src="app.js?v=15"></script>
   </body>
 </html>

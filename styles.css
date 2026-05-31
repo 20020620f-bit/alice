@@ -2845,16 +2845,103 @@ body:has(#view-overview.active) .transaction-list.compact {
   color: #999;
 }
 
-.date-input-proxy {
-  position: fixed;
-  left: -200vw;
+.date-dialog {
+  position: absolute;
+  right: 0;
   bottom: 0;
-  width: 1px !important;
-  height: 1px !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  opacity: 0;
-  appearance: none;
+  left: 0;
+  display: grid;
+  gap: 14px;
+  width: min(100%, 430px);
+  margin: 0 auto;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.date-dialog-head {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-dialog-head strong {
+  color: #050505;
+  font-size: 18px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.date-dialog-head .icon-button {
+  width: 38px;
+  height: 38px;
+  color: #050505;
+  background: #f4f4f4;
+  border: 0;
+  border-radius: 50%;
+}
+
+.date-weekdays,
+.date-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.date-weekdays span {
+  color: #9b9b9b;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.date-grid button,
+.date-grid .date-blank {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  aspect-ratio: 1;
+  color: #050505;
+  background: #f7f7f7;
+  border-radius: 13px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.date-grid .date-blank {
+  background: transparent;
+}
+
+.date-grid button.today {
+  color: #2387ff;
+}
+
+.date-grid button.active {
+  color: #fff;
+  background: #2387ff;
+}
+
+.date-dialog-actions {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 10px;
+}
+
+.date-dialog-actions button {
+  height: 50px;
+  border-radius: 15px;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.date-dialog-actions button:first-child {
+  color: #2387ff;
+  background: #eef5ff;
+}
+
+.date-dialog-actions button:last-child {
+  color: #fff;
+  background: #2387ff;
 }

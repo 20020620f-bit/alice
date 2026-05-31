@@ -115,6 +115,13 @@ const elements = {
   noteHistoryList: document.querySelector("#noteHistoryList"),
   clearNoteHistory: document.querySelector("#clearNoteHistory"),
   confirmNoteHistory: document.querySelector("#confirmNoteHistory"),
+  dateDialog: document.querySelector("#dateDialog"),
+  dateDialogTitle: document.querySelector("#dateDialogTitle"),
+  dateGrid: document.querySelector("#dateGrid"),
+  datePrevMonth: document.querySelector("#datePrevMonth"),
+  dateNextMonth: document.querySelector("#dateNextMonth"),
+  dateUseToday: document.querySelector("#dateUseToday"),
+  confirmDate: document.querySelector("#confirmDate"),
   composerCategoryTabs: document.querySelector("#composerCategoryTabs"),
   categoryPicker: document.querySelector("#categoryPicker"),
   composerKeypad: document.querySelector("#composerKeypad"),
@@ -147,6 +154,7 @@ let managerType = "expense";
 let managerCategoryId = DEFAULT_CATEGORIES.expense[0].id;
 let editingEntryId = null;
 let toastTimer = null;
+let dateViewMonth = firstDayOfMonth(new Date());
 let state = loadState();
 
 function pad(value) {
@@ -961,24 +969,62 @@ function formatDateLabel(dateText) {
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
+function parseISODate(dateText) {
+  const date = new Date(`${dateText || todayISO()}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
 function openDatePicker() {
   elements.dateInput.value = elements.dateInput.value || todayISO();
-  try {
-    if (typeof elements.dateInput.showPicker === "function") {
-      elements.dateInput.showPicker();
-      return;
-    }
-  } catch (error) {
-    console.warn("Date picker is not available", error);
-  }
-  try {
-    elements.dateInput.focus();
-    elements.dateInput.click();
-    return;
-  } catch (error) {
-    console.warn("Date input click failed", error);
-  }
-  showToast(`日期：${formatDateLabel(elements.dateInput.value)}`);
+  dateViewMonth = firstDayOfMonth(parseISODate(elements.dateInput.value));
+  renderDateDialog();
+  elements.dateDialog.classList.add("open");
+  elements.dateDialog.setAttribute("aria-hidden", "false");
+}
+
+function closeDateDialog() {
+  elements.dateDialog.classList.remove("open");
+  elements.dateDialog.setAttribute("aria-hidden", "true");
+}
+
+function renderDateDialog() {
+  const selected = elements.dateInput.value || todayISO();
+  const today = todayISO();
+  const year = dateViewMonth.getFullYear();
+  const month = dateViewMonth.getMonth();
+  const first = new Date(year, month, 1);
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const blanks = Array.from({ length: first.getDay() }, () => `<span class="date-blank"></span>`);
+  const days = Array.from({ length: totalDays }, (_, index) => {
+    const day = index + 1;
+    const dateText = toISODate(new Date(year, month, day));
+    const classes = [
+      dateText === selected ? "active" : "",
+      dateText === today ? "today" : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return `<button class="${classes}" type="button" data-date="${dateText}">${day}</button>`;
+  });
+
+  elements.dateDialogTitle.textContent = `${year}年${month + 1}月`;
+  elements.dateGrid.innerHTML = [...blanks, ...days].join("");
+}
+
+function setComposerDate(dateText) {
+  elements.dateInput.value = dateText;
+  dateViewMonth = firstDayOfMonth(parseISODate(dateText));
+  renderDateDialog();
+}
+
+function shiftDateMonth(offset) {
+  dateViewMonth = new Date(dateViewMonth.getFullYear(), dateViewMonth.getMonth() + offset, 1);
+  renderDateDialog();
+}
+
+function confirmDateSelection() {
+  closeDateDialog();
+  showToast(`日期：${formatDateLabel(elements.dateInput.value || todayISO())}`);
 }
 
 function appendAmountToken(token) {
@@ -1037,7 +1083,8 @@ function showToast(message) {
 function handleSubmit(event) {
   event.preventDefault();
   const amount = Number(elements.amountInput.value);
-  const date = elements.dateInput.value;
+  const date = elements.dateInput.value || todayISO();
+  elements.dateInput.value = date;
 
   if (!Number.isFinite(amount) || amount <= 0) {
     showToast("请输入有效金额");
@@ -1156,8 +1203,14 @@ function bindEvents() {
     if (!button) return;
     setNoteFromHistory(button.dataset.noteHistory);
   });
-  elements.dateInput.addEventListener("change", () => {
-    showToast(`日期：${formatDateLabel(elements.dateInput.value)}`);
+  elements.datePrevMonth.addEventListener("click", () => shiftDateMonth(-1));
+  elements.dateNextMonth.addEventListener("click", () => shiftDateMonth(1));
+  elements.dateUseToday.addEventListener("click", () => setComposerDate(todayISO()));
+  elements.confirmDate.addEventListener("click", confirmDateSelection);
+  elements.dateGrid.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-date]");
+    if (!button) return;
+    setComposerDate(button.dataset.date);
   });
 
   document.querySelectorAll("[data-close-note-dialog]").forEach((control) => {
@@ -1166,6 +1219,10 @@ function bindEvents() {
 
   document.querySelectorAll("[data-close-note-history]").forEach((control) => {
     control.addEventListener("click", closeNoteHistoryDialog);
+  });
+
+  document.querySelectorAll("[data-close-date-dialog]").forEach((control) => {
+    control.addEventListener("click", closeDateDialog);
   });
 
   document.querySelectorAll("[data-close-sheet]").forEach((control) => {
@@ -1264,6 +1321,10 @@ function bindEvents() {
   });
 
   window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && elements.dateDialog.classList.contains("open")) {
+      closeDateDialog();
+      return;
+    }
     if (event.key === "Escape" && elements.noteHistoryDialog.classList.contains("open")) {
       closeNoteHistoryDialog();
       return;
