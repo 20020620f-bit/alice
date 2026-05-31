@@ -2278,6 +2278,47 @@ body:has(#view-overview.active) .daily-ledger {
 
 body:has(#view-overview.active) .transaction-list.compact {
   display: grid;
+  gap: 18px;
+}
+
+.expense-day-group {
+  display: grid;
+  gap: 10px;
+}
+
+.expense-day-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+  padding: 0 8px 0 3px;
+}
+
+.expense-day-head strong {
+  color: #050505;
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.expense-day-head span {
+  color: #8f8f8f;
+  font-size: 16px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.expense-day-head span.expense {
+  color: #ef4b4f;
+}
+
+.expense-day-head span.income {
+  color: #31a847;
+}
+
+.expense-day-body {
+  display: grid;
   gap: 10px;
 }
 

@@ -508,22 +508,48 @@ function renderDailyTransactions(container, entries) {
     return;
   }
 
-  container.innerHTML = entries
-    .slice(0, 8)
-    .map((entry) => {
-      const category = getCategory(entry);
-      const amountText = formatSignedMoney(entry.amount, entry.type);
-      const groupLabel = getComposerGroupLabel(entry.type, entry.categoryId);
-      const meta = [entry.note || groupLabel, entry.time || entry.date.slice(5).replace("-", "/")].filter(Boolean).join(" ");
+  const groups = new Map();
+  entries.slice(0, 12).forEach((entry) => {
+    if (!groups.has(entry.date)) {
+      groups.set(entry.date, []);
+    }
+    groups.get(entry.date).push(entry);
+  });
+
+  container.innerHTML = [...groups.entries()]
+    .map(([date, rows]) => {
+      const dailyExpense = sumEntries(rows, "expense");
+      const dailyIncome = sumEntries(rows, "income");
+      const dailyNet = dailyIncome - dailyExpense;
+      const totalClass = dailyNet > 0 ? "income" : dailyNet < 0 ? "expense" : "";
+      const totalText = dailyNet === 0 ? formatMoney(0) : formatSignedMoney(Math.abs(dailyNet), dailyNet > 0 ? "income" : "expense");
+      const rowsMarkup = rows
+        .map((entry) => {
+          const category = getCategory(entry);
+          const amountText = formatSignedMoney(entry.amount, entry.type);
+          const groupLabel = getComposerGroupLabel(entry.type, entry.categoryId);
+          const meta = [entry.note || groupLabel, entry.time || entry.date.slice(5).replace("-", "/")].filter(Boolean).join(" ");
+          return `
+            <article class="expense-card">
+              ${iconMarkup(category)}
+              <div class="expense-card-main">
+                <strong>${escapeHTML(category.label)}</strong>
+                <span>${escapeHTML(meta)}</span>
+              </div>
+              <strong class="expense-card-amount ${entry.type === "income" ? "income" : ""}">${amountText}</strong>
+            </article>
+          `;
+        })
+        .join("");
+
       return `
-        <article class="expense-card">
-          ${iconMarkup(category)}
-          <div class="expense-card-main">
-            <strong>${escapeHTML(category.label)}</strong>
-            <span>${escapeHTML(meta)}</span>
-          </div>
-          <strong class="expense-card-amount ${entry.type === "income" ? "income" : ""}">${amountText}</strong>
-        </article>
+        <section class="expense-day-group">
+          <header class="expense-day-head">
+            <strong>${escapeHTML(date)}</strong>
+            <span class="${totalClass}">${totalText}</span>
+          </header>
+          <div class="expense-day-body">${rowsMarkup}</div>
+        </section>
       `;
     })
     .join("");
