@@ -1,4 +1,4 @@
-const STORAGE_KEY = "qing-ledger-state-v1";
+const STORAGE_KEY = "qing-ledger-state-v2";
 
 const DEFAULT_CATEGORIES = {
   expense: [
@@ -204,22 +204,10 @@ function normalizeCategories(savedCategories, entries = []) {
 }
 
 function defaultState() {
-  const date = new Date();
-  const first = toISODate(new Date(date.getFullYear(), date.getMonth(), 1));
-
   return {
     budget: 6800,
     categories: cloneCategories(),
-    entries: [
-      { id: createId(), type: "income", categoryId: "salary", amount: 12800, date: first, note: "月薪" },
-      { id: createId(), type: "expense", categoryId: "bills", amount: 2480, date: relativeDate(2), note: "房租水电" },
-      { id: createId(), type: "expense", categoryId: "food", amount: 168, date: relativeDate(1), note: "晚餐" },
-      { id: createId(), type: "expense", categoryId: "traffic", amount: 42, date: relativeDate(0), note: "通勤" },
-      { id: createId(), type: "expense", categoryId: "shopping", amount: 389, date: relativeDate(5), note: "日用品" },
-      { id: createId(), type: "expense", categoryId: "health", amount: 126, date: relativeDate(7), note: "药店" },
-      { id: createId(), type: "income", categoryId: "bonus", amount: 600, date: relativeDate(10), note: "项目奖金" },
-      { id: createId(), type: "expense", categoryId: "travel", amount: 320, date: relativeDate(12), note: "周末出行" }
-    ]
+    entries: []
   };
 }
 
