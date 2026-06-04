@@ -2297,7 +2297,7 @@ body:has(#view-overview.active) .transaction-list.compact {
 
 .expense-day-head strong {
   color: #050505;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 950;
   letter-spacing: 0;
 }
