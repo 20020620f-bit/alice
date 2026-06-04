@@ -2322,6 +2322,37 @@ body:has(#view-overview.active) .transaction-list.compact {
   gap: 10px;
 }
 
+.expense-swipe {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #ef4b4f;
+  touch-action: pan-y;
+}
+
+.expense-swipe.open {
+  --swipe-offset: -76px;
+}
+
+.expense-swipe.dragging .expense-swipe-card {
+  transition: none;
+}
+
+.expense-delete-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  width: 76px;
+  border: 0;
+  background: #ef4b4f;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+}
+
 .expense-card {
   display: grid;
   grid-template-columns: 42px 1fr auto;
@@ -2333,6 +2364,13 @@ body:has(#view-overview.active) .transaction-list.compact {
   border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 16px;
   box-shadow: 0 10px 26px rgba(24, 31, 34, 0.05);
+}
+
+.expense-swipe-card {
+  position: relative;
+  z-index: 1;
+  transform: translateX(var(--swipe-offset, 0));
+  transition: transform 0.22s ease;
 }
 
 .expense-card .category-icon {

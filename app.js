@@ -1,5 +1,7 @@
 const STORAGE_KEY = "qing-ledger-state-v2";
 const IS_PREVIEW_MODE = new URLSearchParams(window.location.search).has("preview");
+const SWIPE_DELETE_WIDTH = 76;
+let activeSwipeGesture = null;
 
 const DEFAULT_CATEGORIES = {
   expense: [
@@ -591,14 +593,17 @@ function renderDailyTransactions(container, entries) {
           const groupLabel = getComposerGroupLabel(entry.type, entry.categoryId);
           const meta = [entry.note || groupLabel, entry.time || entry.date.slice(5).replace("-", "/")].filter(Boolean).join(" ");
           return `
-            <article class="expense-card">
-              ${iconMarkup(category)}
-              <div class="expense-card-main">
-                <strong>${escapeHTML(category.label)}</strong>
-                <span>${escapeHTML(meta)}</span>
-              </div>
-              <strong class="expense-card-amount ${entry.type === "income" ? "income" : ""}">${amountText}</strong>
-            </article>
+            <div class="expense-swipe" data-swipe-entry="${entry.id}">
+              <button class="expense-delete-action" type="button" data-delete-entry="${entry.id}" aria-label="\u5220\u9664">\u5220\u9664</button>
+              <article class="expense-card expense-swipe-card">
+                ${iconMarkup(category)}
+                <div class="expense-card-main">
+                  <strong>${escapeHTML(category.label)}</strong>
+                  <span>${escapeHTML(meta)}</span>
+                </div>
+                <strong class="expense-card-amount ${entry.type === "income" ? "income" : ""}">${amountText}</strong>
+              </article>
+            </div>
           `;
         })
         .join("");
@@ -614,6 +619,82 @@ function renderDailyTransactions(container, entries) {
       `;
     })
     .join("");
+}
+
+function setSwipeOffset(item, offset) {
+  item.style.setProperty("--swipe-offset", `${offset}px`);
+}
+
+function closeSwipeItem(item) {
+  if (!item) return;
+  item.classList.remove("open", "dragging");
+  item.style.removeProperty("--swipe-offset");
+}
+
+function openSwipeItem(item) {
+  if (!item) return;
+  item.classList.remove("dragging");
+  item.classList.add("open");
+  item.style.removeProperty("--swipe-offset");
+}
+
+function closeOtherSwipeItems(exceptItem = null) {
+  elements.recentList.querySelectorAll(".expense-swipe.open, .expense-swipe.dragging").forEach((item) => {
+    if (item !== exceptItem) {
+      closeSwipeItem(item);
+    }
+  });
+}
+
+function beginSwipeGesture(event) {
+  if (event.button !== undefined && event.button !== 0) return;
+  const item = event.target.closest(".expense-swipe");
+  if (!item || event.target.closest("[data-delete-entry]")) return;
+
+  closeOtherSwipeItems(item);
+  activeSwipeGesture = {
+    item,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    startOffset: item.classList.contains("open") ? -SWIPE_DELETE_WIDTH : 0,
+    offset: item.classList.contains("open") ? -SWIPE_DELETE_WIDTH : 0,
+    dragging: false
+  };
+}
+
+function updateSwipeGesture(event) {
+  if (!activeSwipeGesture || activeSwipeGesture.pointerId !== event.pointerId) return;
+
+  const deltaX = event.clientX - activeSwipeGesture.startX;
+  const deltaY = event.clientY - activeSwipeGesture.startY;
+
+  if (!activeSwipeGesture.dragging) {
+    if (Math.abs(deltaY) > 10 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      activeSwipeGesture = null;
+      return;
+    }
+    if (Math.abs(deltaX) < 8) return;
+    activeSwipeGesture.dragging = true;
+    activeSwipeGesture.item.classList.add("dragging");
+  }
+
+  const offset = Math.max(-SWIPE_DELETE_WIDTH, Math.min(0, activeSwipeGesture.startOffset + deltaX));
+  activeSwipeGesture.offset = offset;
+  setSwipeOffset(activeSwipeGesture.item, offset);
+  event.preventDefault();
+}
+
+function endSwipeGesture(event) {
+  if (!activeSwipeGesture || activeSwipeGesture.pointerId !== event.pointerId) return;
+
+  const { item, dragging, offset } = activeSwipeGesture;
+  if (dragging && offset <= -SWIPE_DELETE_WIDTH * 0.45) {
+    openSwipeItem(item);
+  } else if (dragging) {
+    closeSwipeItem(item);
+  }
+  activeSwipeGesture = null;
 }
 
 function filteredLedgerEntries(entries) {
@@ -1362,6 +1443,11 @@ function bindEvents() {
     openComposer({ type: "expense", categoryId: button.dataset.quickCategory });
   });
 
+  elements.recentList.addEventListener("pointerdown", beginSwipeGesture);
+  window.addEventListener("pointermove", updateSwipeGesture);
+  window.addEventListener("pointerup", endSwipeGesture);
+  window.addEventListener("pointercancel", endSwipeGesture);
+
   elements.ledgerFilter.addEventListener("click", (event) => {
     const button = event.target.closest("[data-filter]");
     if (!button) return;
@@ -1393,11 +1479,19 @@ function bindEvents() {
     const editButton = event.target.closest("[data-edit-entry]");
     const deleteButton = event.target.closest("[data-delete-entry]");
 
-    if (editButton) {
-      editEntry(editButton.dataset.editEntry);
-    }
     if (deleteButton) {
       deleteEntry(deleteButton.dataset.deleteEntry);
+      return;
+    }
+
+    const openSwipeItemElement = event.target.closest(".expense-swipe.open");
+    if (openSwipeItemElement) {
+      closeSwipeItem(openSwipeItemElement);
+      return;
+    }
+
+    if (editButton) {
+      editEntry(editButton.dataset.editEntry);
     }
   });
 
