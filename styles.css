@@ -2297,14 +2297,14 @@ body:has(#view-overview.active) .transaction-list.compact {
 
 .expense-day-head strong {
   color: #050505;
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 950;
   letter-spacing: 0;
 }
 
 .expense-day-head span {
   color: #8f8f8f;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 950;
   white-space: nowrap;
 }
@@ -2357,7 +2357,7 @@ body:has(#view-overview.active) .transaction-list.compact {
 .expense-card-main strong {
   overflow: hidden;
   color: #050505;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 900;
   line-height: 1.12;
   text-overflow: ellipsis;

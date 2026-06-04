@@ -1,4 +1,5 @@
 const STORAGE_KEY = "qing-ledger-state-v2";
+const IS_PREVIEW_MODE = new URLSearchParams(window.location.search).has("preview");
 
 const DEFAULT_CATEGORIES = {
   expense: [
@@ -265,7 +266,66 @@ function defaultState() {
   };
 }
 
+function previewState() {
+  return {
+    budget: 6800,
+    categories: cloneCategories(),
+    noteHistory: ["早餐", "通勤", "日用品"],
+    entries: [
+      {
+        id: "preview-1",
+        type: "expense",
+        categoryId: "daily",
+        amount: 78,
+        date: todayISO(),
+        time: "17:08",
+        note: "购物"
+      },
+      {
+        id: "preview-2",
+        type: "expense",
+        categoryId: "shopping",
+        amount: 88,
+        date: todayISO(),
+        time: "17:06",
+        note: "购物"
+      },
+      {
+        id: "preview-3",
+        type: "expense",
+        categoryId: "traffic",
+        amount: 42,
+        date: relativeDate(1),
+        time: "08:22",
+        note: "通勤"
+      },
+      {
+        id: "preview-4",
+        type: "expense",
+        categoryId: "food",
+        amount: 166,
+        date: relativeDate(2),
+        time: "19:12",
+        note: "晚餐"
+      },
+      {
+        id: "preview-5",
+        type: "income",
+        categoryId: "salary",
+        amount: 3200,
+        date: relativeDate(3),
+        time: "09:30",
+        note: "工资"
+      }
+    ]
+  };
+}
+
 function loadState() {
+  if (IS_PREVIEW_MODE) {
+    return previewState();
+  }
+
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved && Array.isArray(saved.entries)) {
@@ -285,6 +345,7 @@ function loadState() {
 }
 
 function saveState() {
+  if (IS_PREVIEW_MODE) return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
@@ -1383,7 +1444,29 @@ function registerServiceWorker() {
   });
 }
 
+function applyLayoutTunerCss(cssText) {
+  if (!IS_PREVIEW_MODE || typeof cssText !== "string") return;
+  let style = document.querySelector("#layout-tuner-style");
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "layout-tuner-style";
+    document.head.appendChild(style);
+  }
+  style.textContent = cssText;
+}
+
+if (IS_PREVIEW_MODE) {
+  window.addEventListener("message", (event) => {
+    if (event.data?.type !== "qing-layout-tuner-css") return;
+    applyLayoutTunerCss(event.data.css);
+    window.parent?.postMessage({ type: "qing-layout-tuner-applied" }, "*");
+  });
+}
+
 bindEvents();
 renderCategoryPicker();
 render();
+if (IS_PREVIEW_MODE) {
+  window.parent?.postMessage({ type: "qing-layout-preview-ready" }, "*");
+}
 registerServiceWorker();

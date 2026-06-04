@@ -168,6 +168,14 @@
         line-height: 1.6;
       }
 
+      .status {
+        width: min(100%, 430px);
+        margin-top: 8px;
+        color: #0b8068;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
       @media (max-width: 920px) {
         .tuner {
           grid-template-columns: 1fr;
@@ -210,8 +218,9 @@
 
       <section class="stage">
         <div class="phone-frame">
-          <iframe id="preview" src="index.html" title="晴账预览"></iframe>
+          <iframe id="preview" src="index.html?preview=1&tuner=18" title="晴账预览"></iframe>
         </div>
+        <div class="status" id="previewStatus">预览加载中...</div>
         <div class="hint">如果右侧仍显示旧尺寸，点“重置”或刷新本页。正式 App 不会被这个页面保存修改。</div>
       </section>
     </main>
@@ -290,6 +299,7 @@
       const controlGroups = document.querySelector("#controlGroups");
       const exportText = document.querySelector("#exportText");
       const iframe = document.querySelector("#preview");
+      const previewStatus = document.querySelector("#previewStatus");
 
       function groupedControls() {
         const groups = new Map();
@@ -328,40 +338,66 @@
       function cssFor(values) {
         return `
 html, body, button, input { font-family: "Microsoft YaHei", "微软雅黑", sans-serif !important; }
-body:has(#view-overview.active) .topbar { min-height: ${values.topbarHeight}px; padding: calc(6px + env(safe-area-inset-top)) 12px 6px; }
-body:has(#view-overview.active) .content { padding: 0 ${values.contentPad}px; }
-body:has(#view-overview.active) .month-ledger { padding: ${values.summaryPad}px 0 0; }
-body:has(#view-overview.active) .month-total span { font-size: ${values.labelFont}px; }
-body:has(#view-overview.active) .month-total strong { font-size: ${values.amountFont}px; }
-body:has(#view-overview.active) .spend-orbit { width: ${values.ringSize}px; }
-body:has(#view-overview.active) .spend-stage .saving-ring { border-width: ${values.ringBorder}px; }
-body:has(#view-overview.active) .spend-core { inset: ${values.coreInset}%; border-width: ${values.ringBorder}px; }
-body:has(#view-overview.active) .spend-core div span { font-size: ${values.coreTitle}px; }
-body:has(#view-overview.active) .spend-core strong { font-size: ${values.coreAmount}px; }
-body:has(#view-overview.active) .compact-budget { padding: ${values.budgetPad}px ${values.budgetPad + 2}px; }
-body:has(#view-overview.active) .day-card { border-radius: ${values.cardRadius}px; }
-body:has(#view-overview.active) .day-card-head strong,
-body:has(#view-overview.active) .day-card-head span { font-size: ${values.cardHeadFont}px; }
-body:has(#view-overview.active) .day-entry { grid-template-columns: ${values.entryIcon}px 1fr auto; padding: ${values.entryPad}px ${values.entryPad + 1}px; }
-body:has(#view-overview.active) .day-entry .category-icon { width: ${values.entryIcon}px; height: ${values.entryIcon}px; }
-body:has(#view-overview.active) .day-entry .category-icon svg { width: ${Math.round(values.entryIcon * 0.53)}px; height: ${Math.round(values.entryIcon * 0.53)}px; }
-body:has(#view-overview.active) .day-entry-main strong { font-size: ${values.entryFont}px; }
-body:has(#view-overview.active) .category-strip { grid-auto-columns: minmax(${values.catWidth}px, 1fr); }
-body:has(#view-overview.active) .fab { width: ${values.fabSize}px; height: ${values.fabSize}px; }
-body:has(#view-overview.active) .fab svg { width: ${Math.round(values.fabSize * 0.54)}px; height: ${Math.round(values.fabSize * 0.54)}px; }
+body:has(#view-overview.active) .topbar { min-height: ${values.topbarHeight}px !important; padding: calc(6px + env(safe-area-inset-top)) 12px 6px !important; }
+body:has(#view-overview.active) .content { padding: 0 ${values.contentPad}px !important; }
+body:has(#view-overview.active) .month-ledger { padding: ${values.summaryPad}px 0 0 !important; }
+body:has(#view-overview.active) .month-total span { font-size: ${values.labelFont}px !important; }
+body:has(#view-overview.active) .month-total strong { font-size: ${values.amountFont}px !important; }
+body:has(#view-overview.active) .spend-stage { padding-top: ${Math.max(2, Math.round(values.summaryPad * 0.65))}px !important; padding-bottom: ${Math.max(6, Math.round(values.summaryPad * 0.85))}px !important; }
+body:has(#view-overview.active) .spend-orbit { width: ${values.ringSize}px !important; }
+body:has(#view-overview.active) .spend-stage .saving-ring { border-width: ${values.ringBorder}px !important; }
+body:has(#view-overview.active) .spend-core { inset: ${values.coreInset}% !important; border-width: ${values.ringBorder}px !important; }
+body:has(#view-overview.active) .spend-core div span { font-size: ${values.coreTitle}px !important; }
+body:has(#view-overview.active) .spend-core strong { font-size: ${values.coreAmount}px !important; }
+body:has(#view-overview.active) .compact-budget { padding: ${values.budgetPad}px ${values.budgetPad + 2}px !important; }
+body:has(#view-overview.active) .expense-day-head strong,
+body:has(#view-overview.active) .expense-day-head span { font-size: ${values.cardHeadFont}px !important; }
+body:has(#view-overview.active) .expense-card { grid-template-columns: ${values.entryIcon + 6}px 1fr auto !important; min-height: ${Math.max(58, values.entryIcon + values.entryPad * 3)}px !important; padding: ${values.entryPad}px ${values.entryPad + 7}px !important; border-radius: ${values.cardRadius}px !important; }
+body:has(#view-overview.active) .expense-card .category-icon { width: ${values.entryIcon}px !important; height: ${values.entryIcon}px !important; }
+body:has(#view-overview.active) .expense-card .category-icon svg { width: ${Math.round(values.entryIcon * 0.7)}px !important; height: ${Math.round(values.entryIcon * 0.7)}px !important; }
+body:has(#view-overview.active) .expense-card-main strong { font-size: ${values.entryFont}px !important; }
+body:has(#view-overview.active) .expense-card-main span { font-size: ${Math.max(10, values.entryFont - 4)}px !important; }
+body:has(#view-overview.active) .expense-card-amount { font-size: ${Math.max(12, values.entryFont)}px !important; }
+body:has(#view-overview.active) .category-strip { grid-auto-columns: minmax(${values.catWidth}px, 1fr) !important; }
+body:has(#view-overview.active) .fab { width: ${values.fabSize}px !important; height: ${values.fabSize}px !important; }
+body:has(#view-overview.active) .fab svg { width: ${Math.round(values.fabSize * 0.54)}px !important; height: ${Math.round(values.fabSize * 0.54)}px !important; }
         `.trim();
       }
 
       function injectCss() {
-        const doc = iframe.contentDocument;
-        if (!doc) return;
-        let style = doc.querySelector("#layout-tuner-style");
-        if (!style) {
-          style = doc.createElement("style");
-          style.id = "layout-tuner-style";
-          doc.head.appendChild(style);
+        const css = cssFor(state);
+        let injected = false;
+        let doc;
+        try {
+          doc = iframe.contentDocument;
+        } catch {
+          doc = null;
         }
-        style.textContent = cssFor(state);
+        if (doc?.head) {
+          let style = doc.querySelector("#layout-tuner-style");
+          if (!style) {
+            style = doc.createElement("style");
+            style.id = "layout-tuner-style";
+            doc.head.appendChild(style);
+          }
+          style.textContent = css;
+          injected = true;
+        }
+
+        try {
+          iframe.contentWindow?.postMessage({ type: "qing-layout-tuner-css", css }, "*");
+          injected = true;
+        } catch {
+          // The iframe may still be loading. Retry logic below will handle it.
+        }
+
+        previewStatus.textContent = injected ? "预览已连接，滑块会实时生效" : "预览加载中，稍等后再试";
+      }
+
+      function retryInjectCss() {
+        [0, 150, 400, 800, 1400, 2200].forEach((delay) => {
+          window.setTimeout(injectCss, delay);
+        });
       }
 
       function updateExport() {
@@ -415,9 +451,16 @@ body:has(#view-overview.active) .fab svg { width: ${Math.round(values.fabSize * 
         }
       });
 
-      iframe.addEventListener("load", () => {
-        window.setTimeout(injectCss, 200);
+      iframe.addEventListener("load", retryInjectCss);
+
+      window.addEventListener("message", (event) => {
+        if (event.data?.type === "qing-layout-preview-ready" || event.data?.type === "qing-layout-tuner-applied") {
+          previewStatus.textContent = "预览已连接，滑块会实时生效";
+          injectCss();
+        }
       });
+
+      retryInjectCss();
     </script>
   </body>
 </html>
