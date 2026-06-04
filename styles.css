@@ -2327,7 +2327,9 @@ body:has(#view-overview.active) .transaction-list.compact {
   overflow: hidden;
   border-radius: 16px;
   background: #ef4b4f;
+  contain: layout paint;
   touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .expense-swipe.open {
@@ -2344,6 +2346,8 @@ body:has(#view-overview.active) .transaction-list.compact {
   right: 0;
   bottom: 0;
   z-index: 0;
+  display: grid;
+  place-items: center;
   width: 76px;
   border: 0;
   background: #ef4b4f;
@@ -2369,8 +2373,10 @@ body:has(#view-overview.active) .transaction-list.compact {
 .expense-swipe-card {
   position: relative;
   z-index: 1;
-  transform: translateX(var(--swipe-offset, 0));
-  transition: transform 0.22s ease;
+  backface-visibility: hidden;
+  transform: translate3d(var(--swipe-offset, 0), 0, 0);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
 }
 
 .expense-card .category-icon {

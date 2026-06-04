@@ -1,6 +1,9 @@
 const STORAGE_KEY = "qing-ledger-state-v2";
 const IS_PREVIEW_MODE = new URLSearchParams(window.location.search).has("preview");
 const SWIPE_DELETE_WIDTH = 76;
+const SWIPE_START_THRESHOLD = 8;
+const SWIPE_OPEN_THRESHOLD = 0.45;
+const SWIPE_FLING_VELOCITY = 0.25;
 let activeSwipeGesture = null;
 
 const DEFAULT_CATEGORIES = {
@@ -619,23 +622,45 @@ function renderDailyTransactions(container, entries) {
       `;
     })
     .join("");
+
+  setupSwipeActions(container);
+}
+
+function clampSwipeOffset(offset) {
+  return Math.max(-SWIPE_DELETE_WIDTH, Math.min(0, offset));
+}
+
+function readSwipeOffset(item) {
+  return Number(item.dataset.swipeOffset || 0);
+}
+
+function commitSwipeOffset(item, offset) {
+  item.dataset.swipeOffset = String(offset);
+  item.style.setProperty("--swipe-offset", `${offset}px`);
 }
 
 function setSwipeOffset(item, offset) {
-  item.style.setProperty("--swipe-offset", `${offset}px`);
+  const nextOffset = clampSwipeOffset(offset);
+  item.dataset.swipeOffset = String(nextOffset);
+
+  if (item.swipeFrame) return;
+  item.swipeFrame = window.requestAnimationFrame(() => {
+    item.swipeFrame = 0;
+    item.style.setProperty("--swipe-offset", `${readSwipeOffset(item)}px`);
+  });
 }
 
 function closeSwipeItem(item) {
   if (!item) return;
   item.classList.remove("open", "dragging");
-  item.style.removeProperty("--swipe-offset");
+  commitSwipeOffset(item, 0);
 }
 
 function openSwipeItem(item) {
   if (!item) return;
   item.classList.remove("dragging");
   item.classList.add("open");
-  item.style.removeProperty("--swipe-offset");
+  commitSwipeOffset(item, -SWIPE_DELETE_WIDTH);
 }
 
 function closeOtherSwipeItems(exceptItem = null) {
@@ -646,8 +671,62 @@ function closeOtherSwipeItems(exceptItem = null) {
   });
 }
 
+function settleSwipeItem(item, velocityX = 0) {
+  const offset = readSwipeOffset(item);
+  const fastLeft = velocityX <= -SWIPE_FLING_VELOCITY;
+  const fastRight = velocityX >= SWIPE_FLING_VELOCITY;
+  const draggedEnough = Math.abs(offset) >= SWIPE_DELETE_WIDTH * SWIPE_OPEN_THRESHOLD;
+
+  if (fastLeft || (!fastRight && draggedEnough)) {
+    openSwipeItem(item);
+  } else {
+    closeSwipeItem(item);
+  }
+}
+
+function setupHammerSwipeItem(item) {
+  if (!window.Hammer || item.dataset.swipeReady === "1") return;
+  item.dataset.swipeReady = "1";
+
+  const manager = new window.Hammer.Manager(item, {
+    touchAction: "pan-y"
+  });
+  manager.add(new window.Hammer.Pan({
+    direction: window.Hammer.DIRECTION_HORIZONTAL,
+    threshold: SWIPE_START_THRESHOLD
+  }));
+
+  let startOffset = 0;
+
+  manager.on("panstart", () => {
+    closeOtherSwipeItems(item);
+    startOffset = item.classList.contains("open") ? -SWIPE_DELETE_WIDTH : readSwipeOffset(item);
+    item.classList.add("dragging");
+    item.classList.remove("open");
+    commitSwipeOffset(item, startOffset);
+  });
+
+  manager.on("panmove", (event) => {
+    const offset = clampSwipeOffset(startOffset + event.deltaX);
+    setSwipeOffset(item, offset);
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+      event.srcEvent.preventDefault();
+    }
+  });
+
+  manager.on("panend pancancel", (event) => {
+    item.classList.remove("dragging");
+    settleSwipeItem(item, event.velocityX);
+  });
+}
+
+function setupSwipeActions(container) {
+  if (!window.Hammer) return;
+  container.querySelectorAll(".expense-swipe").forEach(setupHammerSwipeItem);
+}
+
 function beginSwipeGesture(event) {
-  if (event.button !== undefined && event.button !== 0) return;
+  if (window.Hammer || (event.button !== undefined && event.button !== 0)) return;
   const item = event.target.closest(".expense-swipe");
   if (!item || event.target.closest("[data-delete-entry]")) return;
 
@@ -657,8 +736,7 @@ function beginSwipeGesture(event) {
     pointerId: event.pointerId,
     startX: event.clientX,
     startY: event.clientY,
-    startOffset: item.classList.contains("open") ? -SWIPE_DELETE_WIDTH : 0,
-    offset: item.classList.contains("open") ? -SWIPE_DELETE_WIDTH : 0,
+    startOffset: item.classList.contains("open") ? -SWIPE_DELETE_WIDTH : readSwipeOffset(item),
     dragging: false
   };
 }
@@ -674,25 +752,22 @@ function updateSwipeGesture(event) {
       activeSwipeGesture = null;
       return;
     }
-    if (Math.abs(deltaX) < 8) return;
+    if (Math.abs(deltaX) < SWIPE_START_THRESHOLD) return;
     activeSwipeGesture.dragging = true;
     activeSwipeGesture.item.classList.add("dragging");
   }
 
-  const offset = Math.max(-SWIPE_DELETE_WIDTH, Math.min(0, activeSwipeGesture.startOffset + deltaX));
-  activeSwipeGesture.offset = offset;
-  setSwipeOffset(activeSwipeGesture.item, offset);
+  setSwipeOffset(activeSwipeGesture.item, activeSwipeGesture.startOffset + deltaX);
   event.preventDefault();
 }
 
 function endSwipeGesture(event) {
   if (!activeSwipeGesture || activeSwipeGesture.pointerId !== event.pointerId) return;
 
-  const { item, dragging, offset } = activeSwipeGesture;
-  if (dragging && offset <= -SWIPE_DELETE_WIDTH * 0.45) {
-    openSwipeItem(item);
-  } else if (dragging) {
-    closeSwipeItem(item);
+  const { item, dragging } = activeSwipeGesture;
+  item.classList.remove("dragging");
+  if (dragging) {
+    settleSwipeItem(item);
   }
   activeSwipeGesture = null;
 }
@@ -1443,10 +1518,12 @@ function bindEvents() {
     openComposer({ type: "expense", categoryId: button.dataset.quickCategory });
   });
 
-  elements.recentList.addEventListener("pointerdown", beginSwipeGesture);
-  window.addEventListener("pointermove", updateSwipeGesture);
-  window.addEventListener("pointerup", endSwipeGesture);
-  window.addEventListener("pointercancel", endSwipeGesture);
+  if (!window.Hammer) {
+    elements.recentList.addEventListener("pointerdown", beginSwipeGesture);
+    window.addEventListener("pointermove", updateSwipeGesture);
+    window.addEventListener("pointerup", endSwipeGesture);
+    window.addEventListener("pointercancel", endSwipeGesture);
+  }
 
   elements.ledgerFilter.addEventListener("click", (event) => {
     const button = event.target.closest("[data-filter]");
