@@ -1,6 +1,6 @@
 const STORAGE_KEY = "qing-ledger-state-v2";
 const IS_PREVIEW_MODE = new URLSearchParams(window.location.search).has("preview");
-const SWIPE_DELETE_WIDTH = 76;
+const SWIPE_DELETE_WIDTH = 88;
 const SWIPE_START_THRESHOLD = 8;
 const SWIPE_OPEN_THRESHOLD = 0.45;
 const SWIPE_FLING_VELOCITY = 0.25;

@@ -2326,14 +2326,10 @@ body:has(#view-overview.active) .transaction-list.compact {
   position: relative;
   overflow: hidden;
   border-radius: 16px;
-  background: #ef4b4f;
+  background: transparent;
   contain: layout paint;
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
-}
-
-.expense-swipe.open {
-  --swipe-offset: -76px;
 }
 
 .expense-swipe.dragging .expense-swipe-card {
@@ -2342,19 +2338,22 @@ body:has(#view-overview.active) .transaction-list.compact {
 
 .expense-delete-action {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  top: 50%;
+  right: 8px;
   z-index: 0;
   display: grid;
   place-items: center;
-  width: 76px;
+  width: 72px;
+  height: 54px;
   border: 0;
+  border-radius: 18px;
   background: #ef4b4f;
+  box-shadow: 0 10px 22px rgba(239, 75, 79, 0.2);
   color: #fff;
   font-family: inherit;
   font-size: 14px;
   font-weight: 900;
+  transform: translateY(-50%);
 }
 
 .expense-card {
