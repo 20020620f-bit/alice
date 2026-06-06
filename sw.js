@@ -1,4 +1,4 @@
-const CACHE_NAME = "qing-ledger-cache-v27";
+const CACHE_NAME = "qing-ledger-cache-v28";
 const APP_ASSETS = [
   "./",
   "./index.html",

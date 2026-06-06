@@ -482,7 +482,7 @@
     </main>
 
     <script>
-      const STORAGE_KEY = "qing-local-debug-workbench-v2";
+      const STORAGE_KEY = "qing-local-debug-workbench-v3";
       const DEFAULT_WIDTH = 390;
       const controls = [
         { key: "topbarHeight", label: "顶部栏高度", min: 42, max: 72, step: 1, value: 52, unit: "px", group: "顶部" },
@@ -497,8 +497,7 @@
         { key: "coreAmount", label: "圆心金额字号", min: 15, max: 30, step: 0.5, value: 19, unit: "px", group: "圆环" },
         { key: "budgetPad", label: "预算卡内边距", min: 6, max: 18, step: 1, value: 8, unit: "px", group: "预算" },
         { key: "cardRadius", label: "流水卡圆角", min: 6, max: 20, step: 1, value: 16, unit: "px", group: "流水" },
-        { key: "cardHeadFont", label: "日期标题字号", min: 10, max: 26, step: 0.1, value: 13.8, unit: "px", group: "流水" },
-        { key: "entryFont", label: "流水分类/金额字号", min: 10, max: 26, step: 0.1, value: 13.8, unit: "px", group: "流水" },
+        { key: "ledgerMainFont", label: "日期/流水主字号", min: 10, max: 26, step: 0.1, value: 13.8, unit: "px", group: "流水" },
         { key: "entryIcon", label: "流水图标尺寸", min: 24, max: 50, step: 1, value: 34, unit: "px", group: "流水" },
         { key: "entryPad", label: "流水行内边距", min: 6, max: 18, step: 1, value: 12, unit: "px", group: "流水" },
         { key: "catWidth", label: "快捷分类宽度", min: 76, max: 140, step: 2, value: 88, unit: "px", group: "分类" },
@@ -520,8 +519,7 @@
           coreAmount: 17,
           budgetPad: 7,
           cardRadius: 12,
-          cardHeadFont: 13,
-          entryFont: 13,
+          ledgerMainFont: 13,
           entryIcon: 30,
           entryPad: 9,
           catWidth: 80,
@@ -540,8 +538,7 @@
           coreAmount: 23,
           budgetPad: 10,
           cardRadius: 18,
-          cardHeadFont: 15,
-          entryFont: 15,
+          ledgerMainFont: 15,
           entryIcon: 36,
           entryPad: 12,
           catWidth: 102,
@@ -620,14 +617,15 @@ body:has(#view-overview.active) .spend-core { inset: ${values.coreInset}% !impor
 body:has(#view-overview.active) .spend-core div span { font-size: ${values.coreTitle}px !important; }
 body:has(#view-overview.active) .spend-core strong { font-size: ${values.coreAmount}px !important; }
 body:has(#view-overview.active) .compact-budget { padding: ${values.budgetPad}px ${values.budgetPad + 2}px !important; }
+body:has(#view-overview.active) .transaction-list.compact { --ledger-main-font-size: ${values.ledgerMainFont}px !important; }
 body:has(#view-overview.active) .expense-day-head strong,
-body:has(#view-overview.active) .expense-day-head span { font-size: ${values.cardHeadFont}px !important; }
+body:has(#view-overview.active) .expense-day-head span { font-size: var(--ledger-main-font-size) !important; }
 body:has(#view-overview.active) .expense-card { grid-template-columns: ${values.entryIcon + 6}px 1fr auto !important; min-height: ${Math.max(58, values.entryIcon + values.entryPad * 3)}px !important; padding: ${values.entryPad}px ${values.entryPad + 7}px !important; border-radius: ${values.cardRadius}px !important; }
 body:has(#view-overview.active) .expense-card .category-icon { width: ${values.entryIcon}px !important; height: ${values.entryIcon}px !important; }
 body:has(#view-overview.active) .expense-card .category-icon svg { width: ${Math.round(values.entryIcon * 0.7)}px !important; height: ${Math.round(values.entryIcon * 0.7)}px !important; }
-body:has(#view-overview.active) .expense-card-main strong { font-size: ${values.entryFont}px !important; }
-body:has(#view-overview.active) .expense-card-main span { font-size: ${Math.max(10, values.entryFont - 1.5)}px !important; }
-body:has(#view-overview.active) .expense-card-amount { font-size: ${values.entryFont}px !important; }
+body:has(#view-overview.active) .expense-card-main strong { font-size: var(--ledger-main-font-size) !important; }
+body:has(#view-overview.active) .expense-card-main span { font-size: ${Math.max(10, values.ledgerMainFont - 1.5)}px !important; }
+body:has(#view-overview.active) .expense-card-amount { font-size: var(--ledger-main-font-size) !important; }
 body:has(#view-overview.active) .category-strip { grid-auto-columns: minmax(${values.catWidth}px, 1fr) !important; }
 body:has(#view-overview.active) .fab { width: ${values.fabSize}px !important; height: ${values.fabSize}px !important; }
 body:has(#view-overview.active) .fab svg { width: ${Math.round(values.fabSize * 0.54)}px !important; height: ${Math.round(values.fabSize * 0.54)}px !important; }
