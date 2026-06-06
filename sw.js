@@ -1,16 +1,15 @@
-const CACHE_NAME = "qing-ledger-cache-v29";
+const CACHE_NAME = "qing-ledger-cache-v30";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./ui-tuner.html",
-  "./styles.css",
-  "./app.js",
+  "./styles.css?v=30",
+  "./app.js?v=30",
   "./vendor/hammer.min.js",
-  "./manifest.webmanifest",
-  "./assets/app-icon.svg",
-  "./assets/app-icon-180.png",
-  "./assets/app-icon-192.png",
-  "./assets/app-icon-512.png"
+  "./manifest.webmanifest?v=30",
+  "./assets/app-icon-180.png?v=30",
+  "./assets/app-icon-192.png?v=30",
+  "./assets/app-icon-512.png?v=30"
 ];
 
 self.addEventListener("install", (event) => {
