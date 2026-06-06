@@ -3,16 +3,20 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>晴账布局调节器</title>
+    <title>本地调试工作台</title>
     <style>
       :root {
         color-scheme: light;
         font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
-        --ink: #151515;
-        --muted: #6d746f;
-        --line: #dfe4dc;
+        --bg: #f4f6f1;
         --panel: #ffffff;
-        --bg: #f5f7f3;
+        --ink: #101815;
+        --muted: #68736d;
+        --line: #dfe5dd;
+        --soft: #eef3eb;
+        --brand: #0b8068;
+        --dark: #17211d;
+        --phone-width: 390px;
       }
 
       * {
@@ -31,9 +35,9 @@
         font: inherit;
       }
 
-      .tuner {
+      .workspace {
         display: grid;
-        grid-template-columns: minmax(320px, 390px) 1fr;
+        grid-template-columns: minmax(340px, 430px) 1fr;
         min-height: 100vh;
       }
 
@@ -45,39 +49,65 @@
         border-right: 1px solid var(--line);
       }
 
-      .controls h1 {
-        margin: 0;
-        font-size: 22px;
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 9px;
+        margin-bottom: 10px;
+        color: #0b6f5b;
+        background: #e4f2ec;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 850;
       }
 
-      .controls p {
-        margin: 8px 0 18px;
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      .intro {
+        margin: 8px 0 16px;
         color: var(--muted);
         font-size: 13px;
         line-height: 1.7;
       }
 
-      .toolbar {
+      .toolbar,
+      .preset-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        margin-bottom: 16px;
       }
 
-      .toolbar button,
-      .copy {
+      .toolbar {
+        margin-bottom: 12px;
+      }
+
+      .preset-row {
+        margin-bottom: 14px;
+      }
+
+      .btn {
         min-height: 38px;
+        padding: 0 12px;
         color: #fff;
-        background: #17211d;
+        background: var(--dark);
         border: 0;
         border-radius: 8px;
-        font-weight: 800;
+        font-weight: 850;
         cursor: pointer;
       }
 
-      .toolbar button.secondary {
+      .btn.secondary {
         color: var(--ink);
-        background: #edf1ea;
+        background: var(--soft);
+      }
+
+      .btn.green {
+        background: var(--brand);
       }
 
       .group {
@@ -109,22 +139,30 @@
         justify-content: space-between;
         gap: 12px;
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 850;
       }
 
       .control output {
         color: var(--muted);
-        font-weight: 700;
+        font-weight: 800;
       }
 
       .control input[type="range"] {
         width: 100%;
-        accent-color: #0b8068;
+        accent-color: var(--brand);
+      }
+
+      .workflow {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.8;
       }
 
       textarea {
         width: 100%;
-        min-height: 150px;
+        min-height: 138px;
         padding: 10px;
         color: var(--ink);
         background: #f7f9f5;
@@ -136,16 +174,63 @@
       }
 
       .stage {
-        display: grid;
-        place-items: start center;
         min-width: 0;
-        padding: 20px;
+        padding: 18px 20px 28px;
         overflow: auto;
       }
 
+      .stage-bar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        width: min(100%, calc(var(--phone-width) + 20px));
+        margin: 0 auto 12px;
+      }
+
+      .stage-title {
+        display: grid;
+        gap: 4px;
+      }
+
+      .stage-title strong {
+        font-size: 17px;
+      }
+
+      .stage-title span,
+      .status,
+      .hint {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .viewport-buttons {
+        display: flex;
+        gap: 6px;
+      }
+
+      .viewport-buttons button {
+        min-width: 52px;
+        min-height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .viewport-buttons button.active {
+        color: #fff;
+        background: var(--brand);
+        border-color: var(--brand);
+      }
+
       .phone-frame {
-        width: min(100%, 430px);
+        width: min(100%, var(--phone-width));
         min-height: 760px;
+        margin: 0 auto;
         overflow: hidden;
         background: #fff;
         border: 10px solid #161616;
@@ -160,24 +245,23 @@
         border: 0;
       }
 
+      .status,
       .hint {
-        width: min(100%, 430px);
-        margin-top: 12px;
-        color: var(--muted);
-        font-size: 12px;
-        line-height: 1.6;
+        width: min(100%, calc(var(--phone-width) + 20px));
+        margin: 10px auto 0;
       }
 
       .status {
-        width: min(100%, 430px);
-        margin-top: 8px;
-        color: #0b8068;
-        font-size: 12px;
-        font-weight: 800;
+        color: var(--brand);
+        font-weight: 850;
       }
 
-      @media (max-width: 920px) {
-        .tuner {
+      .panel-toggle {
+        display: none;
+      }
+
+      @media (max-width: 940px) {
+        .workspace {
           grid-template-columns: 1fr;
         }
 
@@ -187,69 +271,262 @@
           border-right: 0;
           border-bottom: 1px solid var(--line);
         }
+      }
+
+      @media (max-width: 700px) {
+        body {
+          min-height: 100svh;
+          overflow: hidden;
+          background: #fff;
+        }
+
+        .workspace {
+          display: block;
+          min-height: 100svh;
+        }
 
         .stage {
-          padding: 14px;
+          position: fixed;
+          inset: 0;
+          padding: 0;
+          overflow: hidden;
+          background: #fff;
+        }
+
+        .stage-bar {
+          position: fixed;
+          top: calc(8px + env(safe-area-inset-top));
+          left: 10px;
+          right: 10px;
+          z-index: 3;
+          width: auto;
+          min-height: 42px;
+          padding: 8px 10px;
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(223, 229, 221, 0.8);
+          border-radius: 12px;
+          backdrop-filter: blur(14px);
+        }
+
+        .stage-title strong {
+          font-size: 14px;
+        }
+
+        .stage-title span {
+          display: none;
+        }
+
+        .viewport-buttons {
+          display: none;
+        }
+
+        .phone-frame {
+          width: 100vw;
+          height: 100svh;
+          min-height: 0;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        iframe {
+          height: 100svh;
+        }
+
+        .status {
+          position: fixed;
+          top: calc(18px + env(safe-area-inset-top));
+          right: 20px;
+          z-index: 4;
+          width: auto;
+          max-width: 44vw;
+          margin: 0;
+          color: var(--brand);
+          overflow: hidden;
+          text-align: right;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .hint {
+          display: none;
+        }
+
+        .controls {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 5;
+          height: min(58svh, 520px);
+          padding: 15px 14px calc(14px + env(safe-area-inset-bottom));
+          overflow: auto;
+          background: rgba(255, 255, 255, 0.96);
+          border: 1px solid rgba(223, 229, 221, 0.9);
+          border-bottom: 0;
+          border-radius: 20px 20px 0 0;
+          box-shadow: 0 -18px 44px rgba(16, 24, 21, 0.16);
+          transform: translateY(0);
+          transition: transform 0.24s ease;
+        }
+
+        body.panel-collapsed .controls {
+          transform: translateY(calc(100% - 74px));
+        }
+
+        .panel-toggle {
+          position: absolute;
+          top: 13px;
+          right: 14px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 32px;
+          padding: 0 10px;
+          color: #fff;
+          background: var(--dark);
+          border: 0;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 850;
+        }
+
+        .eyebrow {
+          margin-right: 92px;
+          margin-bottom: 6px;
+        }
+
+        h1 {
+          font-size: 18px;
+        }
+
+        .intro {
+          display: none;
+        }
+
+        .toolbar,
+        .preset-row {
+          grid-template-columns: 1fr 1fr;
+          margin-top: 12px;
+        }
+
+        .group {
+          padding: 12px;
+          margin-bottom: 10px;
+        }
+
+        textarea {
+          min-height: 96px;
         }
       }
     </style>
   </head>
   <body>
-    <main class="tuner">
+    <main class="workspace">
       <section class="controls">
-        <h1>布局大小调节器</h1>
-        <p>这里不会改正式代码，只实时调整右侧预览。调好后复制底部参数发给我。</p>
+        <button class="panel-toggle" type="button" id="togglePanel">收起面板</button>
+        <span class="eyebrow">LOCAL DEBUG</span>
+        <h1>本地调试工作台</h1>
+        <p class="intro">这里用于本地预览和调参，不会保存到正式 App 代码。调好后把参数交给我落到 `styles.css`，最后再上传 GitHub Pages。</p>
 
         <div class="toolbar">
-          <button type="button" data-preset="compact">紧凑</button>
-          <button class="secondary" type="button" data-preset="comfortable">舒适</button>
-          <button class="secondary" type="button" data-preset="tiny">更小</button>
-          <button class="secondary" type="button" id="reset">重置</button>
+          <button class="btn green" type="button" id="reloadPreview">刷新预览</button>
+          <button class="btn secondary" type="button" id="openLocalApp">打开本地 App</button>
         </div>
 
-        <div class="group" id="controlGroups"></div>
+        <div class="preset-row">
+          <button class="btn" type="button" data-preset="current">当前主页</button>
+          <button class="btn secondary" type="button" data-preset="compact">紧凑</button>
+          <button class="btn secondary" type="button" data-preset="comfortable">舒适</button>
+          <button class="btn secondary" type="button" id="reset">重置</button>
+        </div>
 
         <div class="group">
-          <h2>复制给 Codex</h2>
+          <h2>本地工作流</h2>
+          <ol class="workflow">
+            <li>先在右侧预览里调到满意。</li>
+            <li>把参数复制给 Codex，落到正式 CSS。</li>
+            <li>本地打开 `index.html` 验证功能。</li>
+            <li>确认无误后再 commit / push。</li>
+          </ol>
+        </div>
+
+        <div id="controlGroups"></div>
+
+        <div class="group">
+          <h2>复制参数</h2>
           <textarea id="exportText" readonly></textarea>
-          <button class="copy" type="button" id="copy">复制参数</button>
+          <button class="btn green" type="button" id="copy">复制给 Codex</button>
         </div>
       </section>
 
       <section class="stage">
+        <div class="stage-bar">
+          <div class="stage-title">
+            <strong>手机预览</strong>
+            <span id="previewUrl">index.html?preview=1</span>
+          </div>
+          <div class="viewport-buttons" id="viewportButtons">
+            <button type="button" data-width="375">375</button>
+            <button type="button" data-width="390">390</button>
+            <button type="button" data-width="430">430</button>
+          </div>
+        </div>
+
         <div class="phone-frame">
-          <iframe id="preview" src="index.html?preview=1&tuner=18" title="晴账预览"></iframe>
+          <iframe id="preview" title="晴账本地预览"></iframe>
         </div>
         <div class="status" id="previewStatus">预览加载中...</div>
-        <div class="hint">如果右侧仍显示旧尺寸，点“重置”或刷新本页。正式 App 不会被这个页面保存修改。</div>
+        <div class="hint">右侧是预览数据，不会污染正式账本。本地确认后再上传 GitHub，减少低质量提交。</div>
       </section>
     </main>
 
     <script>
-      const STORAGE_KEY = "qing-layout-tuner-v1";
+      const STORAGE_KEY = "qing-local-debug-workbench-v2";
+      const DEFAULT_WIDTH = 390;
       const controls = [
         { key: "topbarHeight", label: "顶部栏高度", min: 42, max: 72, step: 1, value: 52, unit: "px", group: "顶部" },
         { key: "contentPad", label: "左右边距", min: 8, max: 24, step: 1, value: 12, unit: "px", group: "整体" },
         { key: "summaryPad", label: "收支区上边距", min: 4, max: 28, step: 1, value: 12, unit: "px", group: "整体" },
-        { key: "labelFont", label: "月支出标题字号", min: 12, max: 22, step: 1, value: 16, unit: "px", group: "收支" },
-        { key: "amountFont", label: "月金额字号", min: 18, max: 34, step: 1, value: 22, unit: "px", group: "收支" },
+        { key: "labelFont", label: "月支出标题字号", min: 12, max: 22, step: 0.5, value: 16, unit: "px", group: "收支" },
+        { key: "amountFont", label: "月金额字号", min: 18, max: 34, step: 0.5, value: 22, unit: "px", group: "收支" },
         { key: "ringSize", label: "圆环直径", min: 120, max: 260, step: 2, value: 176, unit: "px", group: "圆环" },
         { key: "ringBorder", label: "圆环边框", min: 1, max: 4, step: 0.25, value: 1.5, unit: "px", group: "圆环" },
         { key: "coreInset", label: "圆心留白", min: 21, max: 31, step: 0.5, value: 25.5, unit: "%", group: "圆环" },
-        { key: "coreTitle", label: "圆心标题字号", min: 11, max: 20, step: 1, value: 13, unit: "px", group: "圆环" },
-        { key: "coreAmount", label: "圆心金额字号", min: 15, max: 30, step: 1, value: 19, unit: "px", group: "圆环" },
+        { key: "coreTitle", label: "圆心标题字号", min: 11, max: 20, step: 0.5, value: 13, unit: "px", group: "圆环" },
+        { key: "coreAmount", label: "圆心金额字号", min: 15, max: 30, step: 0.5, value: 19, unit: "px", group: "圆环" },
         { key: "budgetPad", label: "预算卡内边距", min: 6, max: 18, step: 1, value: 8, unit: "px", group: "预算" },
-        { key: "cardRadius", label: "流水卡圆角", min: 6, max: 18, step: 1, value: 10, unit: "px", group: "流水" },
-        { key: "cardHeadFont", label: "日期标题字号", min: 12, max: 22, step: 1, value: 14, unit: "px", group: "流水" },
-        { key: "entryFont", label: "流水分类字号", min: 12, max: 22, step: 1, value: 14, unit: "px", group: "流水" },
-        { key: "entryIcon", label: "流水图标尺寸", min: 24, max: 50, step: 1, value: 30, unit: "px", group: "流水" },
-        { key: "entryPad", label: "流水行内边距", min: 6, max: 18, step: 1, value: 9, unit: "px", group: "流水" },
+        { key: "cardRadius", label: "流水卡圆角", min: 6, max: 20, step: 1, value: 16, unit: "px", group: "流水" },
+        { key: "cardHeadFont", label: "日期标题字号", min: 10, max: 26, step: 0.1, value: 13.8, unit: "px", group: "流水" },
+        { key: "entryFont", label: "流水分类/金额字号", min: 10, max: 26, step: 0.1, value: 13.8, unit: "px", group: "流水" },
+        { key: "entryIcon", label: "流水图标尺寸", min: 24, max: 50, step: 1, value: 34, unit: "px", group: "流水" },
+        { key: "entryPad", label: "流水行内边距", min: 6, max: 18, step: 1, value: 12, unit: "px", group: "流水" },
         { key: "catWidth", label: "快捷分类宽度", min: 76, max: 140, step: 2, value: 88, unit: "px", group: "分类" },
         { key: "fabSize", label: "加号尺寸", min: 42, max: 76, step: 1, value: 50, unit: "px", group: "加号" }
       ];
 
       const presets = {
-        compact: {},
+        current: {},
+        compact: {
+          topbarHeight: 48,
+          contentPad: 10,
+          summaryPad: 8,
+          labelFont: 14,
+          amountFont: 20,
+          ringSize: 148,
+          ringBorder: 1.25,
+          coreInset: 27,
+          coreTitle: 12,
+          coreAmount: 17,
+          budgetPad: 7,
+          cardRadius: 12,
+          cardHeadFont: 13,
+          entryFont: 13,
+          entryIcon: 30,
+          entryPad: 9,
+          catWidth: 80,
+          fabSize: 46
+        },
         comfortable: {
           topbarHeight: 58,
           contentPad: 14,
@@ -262,44 +539,31 @@
           coreTitle: 15,
           coreAmount: 23,
           budgetPad: 10,
-          cardRadius: 12,
-          cardHeadFont: 16,
-          entryFont: 16,
+          cardRadius: 18,
+          cardHeadFont: 15,
+          entryFont: 15,
           entryIcon: 36,
-          entryPad: 11,
+          entryPad: 12,
           catWidth: 102,
           fabSize: 58
-        },
-        tiny: {
-          topbarHeight: 48,
-          contentPad: 10,
-          summaryPad: 8,
-          labelFont: 14,
-          amountFont: 20,
-          ringSize: 148,
-          ringBorder: 1.25,
-          coreInset: 27,
-          coreTitle: 12,
-          coreAmount: 17,
-          budgetPad: 7,
-          cardRadius: 8,
-          cardHeadFont: 13,
-          entryFont: 13,
-          entryIcon: 28,
-          entryPad: 8,
-          catWidth: 80,
-          fabSize: 46
         }
       };
 
-      const state = Object.fromEntries(controls.map((control) => [control.key, control.value]));
+      const defaultState = Object.fromEntries(controls.map((control) => [control.key, control.value]));
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (saved) Object.assign(state, saved);
+      const state = {
+        ...defaultState,
+        ...(saved?.values || {}),
+        previewWidth: saved?.previewWidth || DEFAULT_WIDTH
+      };
 
       const controlGroups = document.querySelector("#controlGroups");
       const exportText = document.querySelector("#exportText");
       const iframe = document.querySelector("#preview");
       const previewStatus = document.querySelector("#previewStatus");
+      const previewUrl = document.querySelector("#previewUrl");
+      const viewportButtons = document.querySelector("#viewportButtons");
+      const togglePanel = document.querySelector("#togglePanel");
 
       function groupedControls() {
         const groups = new Map();
@@ -310,27 +574,33 @@
         return groups;
       }
 
+      function formatValue(value) {
+        return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
+      }
+
       function renderControls() {
         controlGroups.innerHTML = [...groupedControls().entries()]
           .map(([group, rows]) => `
-            <h2>${group}</h2>
-            ${rows.map((control) => `
-              <div class="control">
-                <label for="${control.key}">
-                  <span>${control.label}</span>
-                  <output id="${control.key}Value">${state[control.key]}${control.unit}</output>
-                </label>
-                <input
-                  id="${control.key}"
-                  type="range"
-                  min="${control.min}"
-                  max="${control.max}"
-                  step="${control.step}"
-                  value="${state[control.key]}"
-                  data-key="${control.key}"
-                >
-              </div>
-            `).join("")}
+            <div class="group">
+              <h2>${group}</h2>
+              ${rows.map((control) => `
+                <div class="control">
+                  <label for="${control.key}">
+                    <span>${control.label}</span>
+                    <output id="${control.key}Value">${formatValue(state[control.key])}${control.unit}</output>
+                  </label>
+                  <input
+                    id="${control.key}"
+                    type="range"
+                    min="${control.min}"
+                    max="${control.max}"
+                    step="${control.step}"
+                    value="${state[control.key]}"
+                    data-key="${control.key}"
+                  >
+                </div>
+              `).join("")}
+            </div>
           `)
           .join("");
       }
@@ -356,12 +626,26 @@ body:has(#view-overview.active) .expense-card { grid-template-columns: ${values.
 body:has(#view-overview.active) .expense-card .category-icon { width: ${values.entryIcon}px !important; height: ${values.entryIcon}px !important; }
 body:has(#view-overview.active) .expense-card .category-icon svg { width: ${Math.round(values.entryIcon * 0.7)}px !important; height: ${Math.round(values.entryIcon * 0.7)}px !important; }
 body:has(#view-overview.active) .expense-card-main strong { font-size: ${values.entryFont}px !important; }
-body:has(#view-overview.active) .expense-card-main span { font-size: ${Math.max(10, values.entryFont - 4)}px !important; }
-body:has(#view-overview.active) .expense-card-amount { font-size: ${Math.max(12, values.entryFont)}px !important; }
+body:has(#view-overview.active) .expense-card-main span { font-size: ${Math.max(10, values.entryFont - 1.5)}px !important; }
+body:has(#view-overview.active) .expense-card-amount { font-size: ${values.entryFont}px !important; }
 body:has(#view-overview.active) .category-strip { grid-auto-columns: minmax(${values.catWidth}px, 1fr) !important; }
 body:has(#view-overview.active) .fab { width: ${values.fabSize}px !important; height: ${values.fabSize}px !important; }
 body:has(#view-overview.active) .fab svg { width: ${Math.round(values.fabSize * 0.54)}px !important; height: ${Math.round(values.fabSize * 0.54)}px !important; }
         `.trim();
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          values: Object.fromEntries(controls.map((control) => [control.key, state[control.key]])),
+          previewWidth: state.previewWidth
+        }));
+      }
+
+      function applyFrameSize() {
+        document.documentElement.style.setProperty("--phone-width", `${state.previewWidth}px`);
+        viewportButtons.querySelectorAll("button").forEach((button) => {
+          button.classList.toggle("active", Number(button.dataset.width) === Number(state.previewWidth));
+        });
       }
 
       function injectCss() {
@@ -388,33 +672,49 @@ body:has(#view-overview.active) .fab svg { width: ${Math.round(values.fabSize * 
           iframe.contentWindow?.postMessage({ type: "qing-layout-tuner-css", css }, "*");
           injected = true;
         } catch {
-          // The iframe may still be loading. Retry logic below will handle it.
+          // iframe may still be loading.
         }
 
         previewStatus.textContent = injected ? "预览已连接，滑块会实时生效" : "预览加载中，稍等后再试";
       }
 
       function retryInjectCss() {
-        [0, 150, 400, 800, 1400, 2200].forEach((delay) => {
+        [0, 120, 320, 700, 1200, 2000].forEach((delay) => {
           window.setTimeout(injectCss, delay);
         });
       }
 
+      function refreshPreview() {
+        const src = `index.html?preview=1&tuner=${Date.now()}`;
+        previewUrl.textContent = src;
+        previewStatus.textContent = "预览刷新中...";
+        iframe.src = src;
+      }
+
       function updateExport() {
-        exportText.value = JSON.stringify(state, null, 2);
+        exportText.value = JSON.stringify({
+          ...Object.fromEntries(controls.map((control) => [control.key, state[control.key]])),
+          previewWidth: state.previewWidth
+        }, null, 2);
+      }
+
+      function updateOutputs() {
+        controls.forEach((control) => {
+          const output = document.querySelector(`#${control.key}Value`);
+          if (output) output.textContent = `${formatValue(state[control.key])}${control.unit}`;
+        });
       }
 
       function update() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        controls.forEach((control) => {
-          const output = document.querySelector(`#${control.key}Value`);
-          if (output) output.textContent = `${state[control.key]}${control.unit}`;
-        });
+        saveState();
+        applyFrameSize();
+        updateOutputs();
         injectCss();
         updateExport();
       }
 
       renderControls();
+      applyFrameSize();
       updateExport();
 
       controlGroups.addEventListener("input", (event) => {
@@ -434,12 +734,28 @@ body:has(#view-overview.active) .fab svg { width: ${Math.round(values.fabSize * 
         });
       });
 
+      viewportButtons.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-width]");
+        if (!button) return;
+        state.previewWidth = Number(button.dataset.width);
+        update();
+      });
+
       document.querySelector("#reset").addEventListener("click", () => {
-        controls.forEach((control) => {
-          state[control.key] = control.value;
-        });
+        Object.assign(state, defaultState, { previewWidth: DEFAULT_WIDTH });
         renderControls();
         update();
+      });
+
+      document.querySelector("#reloadPreview").addEventListener("click", refreshPreview);
+
+      document.querySelector("#openLocalApp").addEventListener("click", () => {
+        window.open(`index.html?local=${Date.now()}`, "_blank", "noopener");
+      });
+
+      togglePanel.addEventListener("click", () => {
+        const collapsed = document.body.classList.toggle("panel-collapsed");
+        togglePanel.textContent = collapsed ? "展开面板" : "收起面板";
       });
 
       document.querySelector("#copy").addEventListener("click", async () => {
@@ -460,6 +776,7 @@ body:has(#view-overview.active) .fab svg { width: ${Math.round(values.fabSize * 
         }
       });
 
+      refreshPreview();
       retryInjectCss();
     </script>
   </body>

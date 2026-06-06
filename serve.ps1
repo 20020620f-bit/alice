@@ -57,12 +57,17 @@ function Send-Text {
 $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Any, $Port)
 $listener.Start()
 
-Write-Host "Qing Ledger is running:"
-Write-Host "  http://localhost:$Port"
+Write-Host "Qing Ledger local server is running:"
+Write-Host "  Local app:        http://localhost:$Port/"
+Write-Host "  Local workbench:  http://localhost:$Port/ui-tuner.html"
 try {
+  Write-Host "  Phone on same Wi-Fi:"
   Get-NetIPAddress -AddressFamily IPv4 |
     Where-Object { $_.IPAddress -notlike "127.*" -and $_.PrefixOrigin -ne "WellKnown" } |
-    ForEach-Object { Write-Host "  http://$($_.IPAddress):$Port" }
+    ForEach-Object {
+      Write-Host "    App:       http://$($_.IPAddress):$Port/"
+      Write-Host "    Workbench: http://$($_.IPAddress):$Port/ui-tuner.html"
+    }
 } catch {
   Write-Host "  Use ipconfig to find the LAN IP address."
 }
