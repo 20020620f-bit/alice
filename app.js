@@ -164,6 +164,7 @@ let composerGroup = COMPOSER_GROUPS.expense[0].id;
 let managerType = "expense";
 let managerCategoryId = DEFAULT_CATEGORIES.expense[0].id;
 let editingEntryId = null;
+let composerReturnContext = null;
 let toastTimer = null;
 let dateViewMonth = firstDayOfMonth(new Date());
 let state = loadState();
@@ -1118,9 +1119,36 @@ function setComposerGroup(groupId) {
   renderCategoryPicker();
 }
 
+function captureComposerReturnContext(entry) {
+  if (!entry?.id) return null;
+  return {
+    entryId: entry.id,
+    scrollY: window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
+  };
+}
+
+function restoreComposerReturnContext(context) {
+  if (!context) return;
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      const target = [...document.querySelectorAll("[data-swipe-entry]")].find(
+        (item) => item.dataset.swipeEntry === context.entryId
+      );
+
+      if (target) {
+        target.scrollIntoView({ block: "center", inline: "nearest" });
+      } else if (Number.isFinite(context.scrollY)) {
+        window.scrollTo(0, context.scrollY);
+      }
+    });
+  });
+}
+
 function openComposer(options = {}) {
   const { type = "expense", categoryId = null, entry = null } = options;
   editingEntryId = entry ? entry.id : null;
+  composerReturnContext = captureComposerReturnContext(entry);
   elements.composerTitle.textContent = entry ? "编辑流水" : "记一笔";
   entryType = entry ? entry.type : type;
   document.querySelectorAll("[data-entry-type]").forEach((button) => {
@@ -1142,11 +1170,20 @@ function openComposer(options = {}) {
   elements.composerSheet.setAttribute("aria-hidden", "false");
 }
 
-function closeComposer() {
+function closeComposer(options = {}) {
+  const { restoreContext = true } = options;
+  const returnContext = composerReturnContext;
   elements.composerSheet.classList.remove("open");
   elements.composerSheet.setAttribute("aria-hidden", "true");
   document.documentElement.classList.remove("sheet-lock");
   editingEntryId = null;
+  composerReturnContext = null;
+
+  if (restoreContext) {
+    restoreComposerReturnContext(returnContext);
+  }
+
+  return returnContext;
 }
 
 function resetForm() {
@@ -1382,8 +1419,11 @@ function handleSubmit(event) {
 
   rememberNote(entry.note);
   saveState();
-  closeComposer();
+  const returnContext = closeComposer({ restoreContext: false });
   render();
+  if (wasEditing) {
+    restoreComposerReturnContext(returnContext);
+  }
   showToast(wasEditing ? "已更新" : "已保存");
 }
 
