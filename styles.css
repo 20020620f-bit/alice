@@ -2087,7 +2087,7 @@ body:has(#view-overview.active) .spend-stage {
 }
 
 body:has(#view-overview.active) .spend-orbit {
-  width: 194px;
+  width: 196px;
 }
 
 body:has(#view-overview.active) .spend-stage .saving-ring {
@@ -2095,7 +2095,12 @@ body:has(#view-overview.active) .spend-stage .saving-ring {
 }
 
 body:has(#view-overview.active) .spend-core {
-  inset: 23%;
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  width: 106px;
+  height: 106px;
+  transform: translate(-50%, -50%);
   border-width: 1.5px;
   gap: 2px;
 }
