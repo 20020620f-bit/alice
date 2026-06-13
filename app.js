@@ -101,6 +101,10 @@ const elements = {
   ledgerList: document.querySelector("#ledgerList"),
   ledgerFilter: document.querySelector("#ledgerFilter"),
   searchInput: document.querySelector("#searchInput"),
+  analysisMonthTitle: document.querySelector("#analysisMonthTitle"),
+  analysisExpenseTotal: document.querySelector("#analysisExpenseTotal"),
+  analysisIncomeTotal: document.querySelector("#analysisIncomeTotal"),
+  analysisNetTotal: document.querySelector("#analysisNetTotal"),
   categoryChart: document.querySelector("#categoryChart"),
   chartTotal: document.querySelector("#chartTotal"),
   trendBars: document.querySelector("#trendBars"),
@@ -147,7 +151,8 @@ const elements = {
 const money = new Intl.NumberFormat("zh-CN", {
   style: "currency",
   currency: "CNY",
-  maximumFractionDigits: 0
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2
 });
 
 let activeMonth = firstDayOfMonth(new Date());
@@ -364,7 +369,8 @@ function escapeHTML(value) {
 }
 
 function formatMoney(value) {
-  return money.format(Math.round(value));
+  const amount = Number(value);
+  return money.format(Number.isFinite(amount) ? amount : 0);
 }
 
 function formatSignedMoney(value, type = "expense") {
@@ -773,7 +779,7 @@ function endSwipeGesture(event) {
 }
 
 function filteredLedgerEntries(entries) {
-  const keyword = elements.searchInput.value.trim().toLowerCase();
+  const keyword = elements.searchInput?.value.trim().toLowerCase() || "";
   return entries.filter((entry) => {
     const category = getCategory(entry);
     const matchesType = ledgerFilter === "all" || entry.type === ledgerFilter;
@@ -784,7 +790,9 @@ function filteredLedgerEntries(entries) {
 
 function renderLists(entries) {
   renderDailyTransactions(elements.recentList, entries);
-  renderTransactionList(elements.ledgerList, filteredLedgerEntries(entries));
+  if (elements.ledgerList) {
+    renderTransactionList(elements.ledgerList, filteredLedgerEntries(entries));
+  }
 }
 
 function renderTrend(entries) {
@@ -859,10 +867,10 @@ function drawCategoryChart(entries) {
   ctx.fillStyle = "#17211d";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = "800 22px -apple-system, BlinkMacSystemFont, 'Segoe UI'";
+  ctx.font = "800 22px 'Microsoft YaHei', '微软雅黑', sans-serif";
   ctx.fillText(formatMoney(total), centerX, centerY - 6);
   ctx.fillStyle = "#667067";
-  ctx.font = "12px -apple-system, BlinkMacSystemFont, 'Segoe UI'";
+  ctx.font = "12px 'Microsoft YaHei', '微软雅黑', sans-serif";
   ctx.fillText("本月支出", centerX, centerY + 20);
 }
 
@@ -895,6 +903,23 @@ function renderBreakdown(entries) {
 }
 
 function renderInsights(entries) {
+  const income = sumEntries(entries, "income");
+  const expense = sumEntries(entries, "expense");
+  const net = income - expense;
+
+  if (elements.analysisMonthTitle) {
+    elements.analysisMonthTitle.textContent = activeMonth.toLocaleDateString("zh-CN", {
+      year: "numeric",
+      month: "long"
+    });
+  }
+  if (elements.analysisExpenseTotal) elements.analysisExpenseTotal.textContent = formatMoney(expense);
+  if (elements.analysisIncomeTotal) elements.analysisIncomeTotal.textContent = formatMoney(income);
+  if (elements.analysisNetTotal) {
+    elements.analysisNetTotal.textContent = `${net < 0 ? "-" : ""}${formatMoney(Math.abs(net))}`;
+    elements.analysisNetTotal.classList.toggle("negative", net < 0);
+  }
+
   renderTrend(entries);
   drawCategoryChart(entries);
   renderBreakdown(entries);
@@ -1339,7 +1364,7 @@ function handleSubmit(event) {
     id: editingEntryId || createId(),
     type: entryType,
     categoryId: selectedCategory,
-    amount: Math.round(amount * 100) / 100,
+    amount,
     date,
     time: existingEntry?.time || currentClockTime(),
     note: elements.noteInput.value.trim()
@@ -1525,17 +1550,21 @@ function bindEvents() {
     window.addEventListener("pointercancel", endSwipeGesture);
   }
 
-  elements.ledgerFilter.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-filter]");
-    if (!button) return;
-    ledgerFilter = button.dataset.filter;
-    elements.ledgerFilter.querySelectorAll("button").forEach((item) => {
-      item.classList.toggle("active", item === button);
+  if (elements.ledgerFilter) {
+    elements.ledgerFilter.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-filter]");
+      if (!button) return;
+      ledgerFilter = button.dataset.filter;
+      elements.ledgerFilter.querySelectorAll("button").forEach((item) => {
+        item.classList.toggle("active", item === button);
+      });
+      renderLists(monthlyEntries());
     });
-    renderLists(monthlyEntries());
-  });
+  }
 
-  elements.searchInput.addEventListener("input", () => renderLists(monthlyEntries()));
+  if (elements.searchInput) {
+    elements.searchInput.addEventListener("input", () => renderLists(monthlyEntries()));
+  }
 
   elements.budgetRange.addEventListener("input", () => {
     state.budget = Number(elements.budgetRange.value);

@@ -1349,6 +1349,183 @@ body:has(#view-overview.active) .fab svg {
   stroke-width: 2.7;
 }
 
+/* Current analysis page */
+body:has(#view-insights.active) {
+  background: #f4f4f4;
+}
+
+body:has(#view-insights.active) .app-shell {
+  padding-bottom: calc(22px + env(safe-area-inset-bottom));
+  background: #f4f4f4;
+}
+
+body:has(#view-insights.active) .topbar,
+body:has(#view-insights.active) .bottom-nav,
+body:has(#view-insights.active) .fab {
+  display: none;
+}
+
+body:has(#view-insights.active) .content {
+  padding: calc(14px + env(safe-area-inset-top)) 18px 26px;
+}
+
+.analysis-top {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0 14px;
+}
+
+.analysis-back {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: #050505;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 10px 24px rgba(24, 31, 34, 0.06);
+}
+
+.analysis-back svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.7;
+}
+
+.analysis-top div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.analysis-top span {
+  color: #8f8f8f;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.analysis-top strong {
+  color: #050505;
+  font-size: 22px;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.analysis-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.analysis-metric {
+  min-width: 0;
+  padding: 12px 10px;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(24, 31, 34, 0.05);
+}
+
+.analysis-metric span {
+  display: block;
+  color: #8f8f8f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.analysis-metric strong {
+  display: block;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  color: #050505;
+  font-size: 16px;
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.analysis-metric.expense strong,
+.analysis-metric.balance strong.negative {
+  color: #ef4b4f;
+}
+
+.analysis-metric.income strong {
+  color: #31a847;
+}
+
+body:has(#view-insights.active) .chart-panel,
+body:has(#view-insights.active) .trend-panel,
+body:has(#view-insights.active) .category-breakdown {
+  margin-top: 14px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  box-shadow: 0 10px 26px rgba(24, 31, 34, 0.05);
+}
+
+body:has(#view-insights.active) .section-title {
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+body:has(#view-insights.active) .section-title span,
+body:has(#view-insights.active) #chartTotal {
+  color: #8f8f8f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+body:has(#view-insights.active) .section-title strong {
+  margin-top: 2px;
+  color: #050505;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+body:has(#view-insights.active) #categoryChart {
+  display: block;
+  width: 100%;
+  height: 210px;
+}
+
+body:has(#view-insights.active) .trend-bars {
+  gap: 9px;
+  height: 118px;
+}
+
+body:has(#view-insights.active) .bar-track {
+  background: #f0f1ef;
+  border-radius: 999px 999px 8px 8px;
+}
+
+body:has(#view-insights.active) .bar-fill {
+  background: #0b8068;
+  border-radius: 999px 999px 8px 8px;
+}
+
+body:has(#view-insights.active) .breakdown-row {
+  grid-template-columns: 36px 1fr auto;
+  padding: 11px 0;
+  border-top-color: #eeeeee;
+}
+
+body:has(#view-insights.active) .breakdown-row .category-icon {
+  width: 34px;
+  height: 34px;
+  background: transparent;
+}
+
+body:has(#view-insights.active) .breakdown-main strong,
+body:has(#view-insights.active) .breakdown-row > strong {
+  color: #050505;
+  font-size: 13.8px;
+  font-weight: 900;
+}
+
 @media (max-width: 360px) {
   .content {
     padding-right: 10px;

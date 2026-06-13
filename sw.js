@@ -1,10 +1,10 @@
-const CACHE_NAME = "qing-ledger-cache-v31";
+const CACHE_NAME = "qing-ledger-cache-v32";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./ui-tuner.html",
-  "./styles.css?v=31",
-  "./app.js?v=30",
+  "./styles.css?v=32",
+  "./app.js?v=32",
   "./vendor/hammer.min.js",
   "./manifest.webmanifest?v=30",
   "./assets/app-icon-180.png?v=30",

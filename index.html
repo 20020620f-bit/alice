@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest?v=30">
     <link rel="apple-touch-icon" href="assets/app-icon-180.png?v=30">
     <link rel="icon" href="assets/app-icon-192.png?v=30" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=31">
+    <link rel="stylesheet" href="styles.css?v=32">
   </head>
   <body>
     <svg class="sprite" aria-hidden="true">
@@ -237,7 +237,7 @@
     <div class="app-shell">
       <header class="topbar">
         <div class="topbar-left">
-          <button class="icon-button menu-button" type="button" data-jump-view="ledger" aria-label="流水">
+          <button class="icon-button menu-button" type="button" aria-label="我的">
             <svg><use href="#icon-list"></use></svg>
           </button>
           <button class="period-pill" type="button" aria-label="按月查看">月</button>
@@ -256,7 +256,7 @@
           <button class="icon-button" type="button" data-jump-view="insights" aria-label="分析提醒">
             <svg><use href="#icon-bell"></use></svg>
           </button>
-          <button class="icon-button" type="button" data-jump-view="ledger" aria-label="日历流水">
+          <button class="icon-button" type="button" aria-label="日历">
             <svg><use href="#icon-calendar"></use></svg>
           </button>
         </div>
@@ -265,12 +265,12 @@
       <main class="content">
         <section class="view active" id="view-overview" data-view-panel="overview">
           <section class="month-ledger" aria-label="月度收支">
-            <button class="month-total expense-total" type="button" data-jump-view="ledger">
+            <button class="month-total expense-total" type="button" data-jump-view="insights">
               <span>月支出</span>
               <svg><use href="#icon-right"></use></svg>
               <strong id="expenseTotal">¥0</strong>
             </button>
-            <button class="month-total income-total" type="button" data-jump-view="ledger">
+            <button class="month-total income-total" type="button" data-jump-view="insights">
               <span>月收入</span>
               <svg><use href="#icon-right"></use></svg>
               <strong id="incomeTotal">¥0</strong>
@@ -329,24 +329,32 @@
           </section>
         </section>
 
-        <section class="view" id="view-ledger" data-view-panel="ledger">
-          <section class="ledger-tools">
-            <div class="segmented" id="ledgerFilter" role="tablist" aria-label="流水筛选">
-              <button class="active" data-filter="all">全部</button>
-              <button data-filter="expense">支出</button>
-              <button data-filter="income">收入</button>
-            </div>
-            <label class="search-box">
-              <span>搜索</span>
-              <input id="searchInput" type="search" placeholder="分类、备注或金额">
-            </label>
-          </section>
-          <section class="list-section">
-            <div class="transaction-list" id="ledgerList"></div>
-          </section>
-        </section>
-
         <section class="view" id="view-insights" data-view-panel="insights">
+          <header class="analysis-top">
+            <button class="analysis-back" type="button" data-view="overview" aria-label="返回总览">
+              <svg><use href="#icon-left"></use></svg>
+            </button>
+            <div>
+              <span id="analysisMonthTitle">本月</span>
+              <strong>收支分析</strong>
+            </div>
+          </header>
+
+          <section class="analysis-summary" aria-label="收支概览">
+            <div class="analysis-metric expense">
+              <span>支出</span>
+              <strong id="analysisExpenseTotal">¥0</strong>
+            </div>
+            <div class="analysis-metric income">
+              <span>收入</span>
+              <strong id="analysisIncomeTotal">¥0</strong>
+            </div>
+            <div class="analysis-metric balance">
+              <span>结余</span>
+              <strong id="analysisNetTotal">¥0</strong>
+            </div>
+          </section>
+
           <section class="chart-panel" aria-labelledby="chartTitle">
             <div class="section-title">
               <div>
@@ -379,21 +387,6 @@
           </section>
         </section>
       </main>
-
-      <nav class="bottom-nav" aria-label="主导航">
-        <button class="active" data-view="overview" aria-label="总览">
-          <svg><use href="#icon-home"></use></svg>
-          <span>总览</span>
-        </button>
-        <button data-view="ledger" aria-label="流水">
-          <svg><use href="#icon-list"></use></svg>
-          <span>流水</span>
-        </button>
-        <button data-view="insights" aria-label="分析">
-          <svg><use href="#icon-chart"></use></svg>
-          <span>分析</span>
-        </button>
-      </nav>
 
       <button class="fab" id="openComposer" aria-label="记一笔">
         <svg><use href="#icon-plus"></use></svg>
@@ -566,6 +559,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="vendor/hammer.min.js?v=29"></script>
-    <script src="app.js?v=30"></script>
+    <script src="app.js?v=32"></script>
   </body>
 </html>
