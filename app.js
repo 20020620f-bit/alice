@@ -581,7 +581,7 @@ function renderDailyTransactions(container, entries) {
   }
 
   const groups = new Map();
-  entries.slice(0, 12).forEach((entry) => {
+  entries.forEach((entry) => {
     if (!groups.has(entry.date)) {
       groups.set(entry.date, []);
     }
@@ -604,7 +604,7 @@ function renderDailyTransactions(container, entries) {
           return `
             <div class="expense-swipe" data-swipe-entry="${entry.id}">
               <button class="expense-delete-action" type="button" data-delete-entry="${entry.id}" aria-label="\u5220\u9664">\u5220\u9664</button>
-              <article class="expense-card expense-swipe-card">
+              <article class="expense-card expense-swipe-card" data-edit-entry="${entry.id}" role="button" tabindex="0" aria-label="\u7f16\u8f91\u8fd9\u7b14\u6d41\u6c34">
                 ${iconMarkup(category)}
                 <div class="expense-card-main">
                   <strong>${escapeHTML(category.label)}</strong>
@@ -1137,6 +1137,7 @@ function openComposer(options = {}) {
   elements.dateInput.value = entry ? entry.date : todayISO();
   elements.noteInput.value = entry ? entry.note || "" : "";
   renderNotePreview();
+  document.documentElement.classList.add("sheet-lock");
   elements.composerSheet.classList.add("open");
   elements.composerSheet.setAttribute("aria-hidden", "false");
 }
@@ -1144,6 +1145,7 @@ function openComposer(options = {}) {
 function closeComposer() {
   elements.composerSheet.classList.remove("open");
   elements.composerSheet.setAttribute("aria-hidden", "true");
+  document.documentElement.classList.remove("sheet-lock");
   editingEntryId = null;
 }
 
@@ -1599,6 +1601,14 @@ function bindEvents() {
     if (editButton) {
       editEntry(editButton.dataset.editEntry);
     }
+  });
+
+  document.body.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const editButton = event.target.closest("[data-edit-entry]");
+    if (!editButton) return;
+    event.preventDefault();
+    editEntry(editButton.dataset.editEntry);
   });
 
   window.addEventListener("resize", () => {

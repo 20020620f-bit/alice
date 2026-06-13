@@ -35,6 +35,13 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+html.sheet-lock,
+html.sheet-lock body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 button,
 input {
   font: inherit;
@@ -1331,7 +1338,8 @@ body:has(#view-overview.active) .app-shell {
 }
 
 body:has(#view-overview.active) .fab {
-  right: 50%;
+  right: auto;
+  left: 50%;
   bottom: calc(28px + env(safe-area-inset-bottom));
   width: 76px;
   height: 76px;
@@ -1340,7 +1348,8 @@ body:has(#view-overview.active) .fab {
   border: 3px solid #050505;
   border-radius: 50%;
   box-shadow: none;
-  transform: translateX(50%);
+  transform: translate3d(-50%, 0, 0);
+  will-change: transform;
 }
 
 body:has(#view-overview.active) .fab svg {
@@ -2980,6 +2989,25 @@ body:has(#view-overview.active) .transaction-list.compact {
 
 .composer-category-tabs {
   margin-top: -2px;
+}
+
+#composerSheet {
+  overscroll-behavior: contain;
+}
+
+#composerSheet .sheet-backdrop {
+  background: #f3f3f3;
+}
+
+#composerSheet .composer-panel {
+  top: 0;
+  bottom: 0;
+  height: 100svh;
+  max-height: none;
+  padding: calc(12px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+  border-radius: 0;
+  animation: none;
+  overscroll-behavior: contain;
 }
 
 .modal-layer {
