@@ -822,6 +822,107 @@ input[type="range"] {
   gap: 14px;
 }
 
+.recent-manager {
+  display: grid;
+  gap: 8px;
+}
+
+.recent-manager-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.recent-manager-head span {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.recent-manager-head strong {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.recent-category-list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(86px, 1fr);
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.recent-category-item {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 86px;
+  min-height: 96px;
+  padding: 7px 7px 8px;
+  color: var(--muted);
+  background: #f7f9f3;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  touch-action: pan-x;
+}
+
+.recent-category-item.active {
+  color: var(--ink);
+  background: #fff;
+  border-color: var(--blue);
+  box-shadow: inset 0 0 0 2px var(--blue);
+  touch-action: none;
+}
+
+.recent-category-item.dragging {
+  transform: scale(0.97);
+}
+
+.recent-category-item .category-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+
+.recent-category-item .category-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.recent-drag-handle {
+  height: 10px;
+  color: #c4c4c4;
+  font-size: 12px;
+  line-height: 10px;
+}
+
+.recent-category-item:not(.active) .recent-drag-handle {
+  opacity: 0;
+}
+
+.recent-category-item > span:not(.recent-drag-handle):not(.category-icon) {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-category-item em {
+  color: var(--muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.recent-category-item.active em {
+  color: var(--blue);
+}
+
 .category-editor-list {
   display: grid;
   grid-auto-flow: column;

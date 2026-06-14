@@ -4,6 +4,8 @@ const SWIPE_DELETE_WIDTH = 88;
 const SWIPE_START_THRESHOLD = 8;
 const SWIPE_OPEN_THRESHOLD = 0.45;
 const SWIPE_FLING_VELOCITY = 0.25;
+const RECENT_COMPOSER_GROUP_ID = "recent";
+const RECENT_CATEGORY_LIMIT = 8;
 let activeSwipeGesture = null;
 
 const DEFAULT_CATEGORIES = {
@@ -81,6 +83,8 @@ const COMPOSER_GROUPS = {
   ]
 };
 
+const RECENT_COMPOSER_GROUP = { id: RECENT_COMPOSER_GROUP_ID, label: "最近", categories: [] };
+
 const elements = {
   monthTitle: document.querySelector("#monthTitle"),
   prevMonth: document.querySelector("#prevMonth"),
@@ -138,6 +142,7 @@ const elements = {
   openCategoryManager: document.querySelector("#openCategoryManager"),
   categorySheet: document.querySelector("#categorySheet"),
   categoryTypeControl: document.querySelector("#categoryTypeControl"),
+  recentCategoryList: document.querySelector("#recentCategoryList"),
   categoryEditorList: document.querySelector("#categoryEditorList"),
   categoryNameInput: document.querySelector("#categoryNameInput"),
   iconGrid: document.querySelector("#iconGrid"),
@@ -165,6 +170,8 @@ let managerType = "expense";
 let managerCategoryId = DEFAULT_CATEGORIES.expense[0].id;
 let editingEntryId = null;
 let composerReturnContext = null;
+let recentCategoryDrag = null;
+let suppressRecentCategoryClick = false;
 let toastTimer = null;
 let dateViewMonth = firstDayOfMonth(new Date());
 let state = loadState();
@@ -268,12 +275,33 @@ function normalizeNoteHistory(savedHistory, entries = []) {
     .slice(0, 30);
 }
 
+function normalizeRecentCategories(savedRecentCategories, categories = cloneCategories()) {
+  const normalized = { expense: [], income: [] };
+
+  ["expense", "income"].forEach((type) => {
+    const validIds = new Set((categories?.[type] || DEFAULT_CATEGORIES[type] || []).map((category) => category.id));
+    const seen = new Set();
+    const source = Array.isArray(savedRecentCategories?.[type]) ? savedRecentCategories[type] : [];
+
+    normalized[type] = source
+      .filter((id) => {
+        if (!id || !validIds.has(id) || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .slice(0, RECENT_CATEGORY_LIMIT);
+  });
+
+  return normalized;
+}
+
 function defaultState() {
   return {
     budget: 6800,
     categories: cloneCategories(),
     entries: [],
-    noteHistory: []
+    noteHistory: [],
+    recentCategories: { expense: [], income: [] }
   };
 }
 
@@ -282,6 +310,10 @@ function previewState() {
     budget: 6800,
     categories: cloneCategories(),
     noteHistory: ["早餐", "通勤", "日用品"],
+    recentCategories: {
+      expense: ["daily", "shopping", "food", "traffic"],
+      income: ["salary"]
+    },
     entries: [
       {
         id: "preview-1",
@@ -340,11 +372,13 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved && Array.isArray(saved.entries)) {
+      const categories = normalizeCategories(saved.categories, saved.entries);
       return {
         budget: Number(saved.budget) || 6800,
-        categories: normalizeCategories(saved.categories, saved.entries),
+        categories,
         entries: saved.entries,
-        noteHistory: normalizeNoteHistory(saved.noteHistory, saved.entries)
+        noteHistory: normalizeNoteHistory(saved.noteHistory, saved.entries),
+        recentCategories: normalizeRecentCategories(saved.recentCategories, categories)
       };
     }
   } catch (error) {
@@ -383,16 +417,35 @@ function getCategoryList(type) {
   return state.categories?.[type] || DEFAULT_CATEGORIES[type] || [];
 }
 
-function getComposerGroups(type = entryType) {
+function getBaseComposerGroups(type = entryType) {
   return COMPOSER_GROUPS[type] || COMPOSER_GROUPS.expense;
 }
 
-function defaultComposerGroup(type = entryType) {
-  return getComposerGroups(type)[0]?.id;
+function getRecentCategoryIds(type = entryType) {
+  state.recentCategories = normalizeRecentCategories(state.recentCategories, state.categories);
+  return state.recentCategories[type] || [];
 }
 
-function findComposerGroupForCategory(type, categoryId) {
-  const groups = getComposerGroups(type);
+function getRecentCategories(type = entryType) {
+  const list = getCategoryList(type);
+  const byId = new Map(list.map((category) => [category.id, category]));
+  return getRecentCategoryIds(type)
+    .map((id) => byId.get(id))
+    .filter(Boolean);
+}
+
+function getComposerGroups(type = entryType) {
+  return [RECENT_COMPOSER_GROUP, ...getBaseComposerGroups(type)];
+}
+
+function defaultComposerGroup(type = entryType) {
+  return getRecentCategoryIds(type).length
+    ? RECENT_COMPOSER_GROUP_ID
+    : getBaseComposerGroups(type)[0]?.id;
+}
+
+function findBaseComposerGroupForCategory(type, categoryId) {
+  const groups = getBaseComposerGroups(type);
   const list = getCategoryList(type);
   const category = list.find((item) => item.id === categoryId);
   if (category?.group && groups.some((group) => group.id === category.group)) {
@@ -401,14 +454,25 @@ function findComposerGroupForCategory(type, categoryId) {
   return groups.find((group) => group.categories.includes(categoryId))?.id || defaultComposerGroup(type);
 }
 
+function findComposerGroupForCategory(type, categoryId) {
+  if (getRecentCategoryIds(type).includes(categoryId)) {
+    return RECENT_COMPOSER_GROUP_ID;
+  }
+  return findBaseComposerGroupForCategory(type, categoryId);
+}
+
 function getComposerGroupLabel(type, categoryId) {
-  const groupId = findComposerGroupForCategory(type, categoryId);
-  return getComposerGroups(type).find((group) => group.id === groupId)?.label || (type === "income" ? "收入" : "支出");
+  const groupId = findBaseComposerGroupForCategory(type, categoryId);
+  return getBaseComposerGroups(type).find((group) => group.id === groupId)?.label || (type === "income" ? "收入" : "支出");
 }
 
 function visibleComposerCategories() {
   const list = getCategoryList(entryType);
-  const groups = getComposerGroups(entryType);
+  if (composerGroup === RECENT_COMPOSER_GROUP_ID) {
+    return getRecentCategories(entryType);
+  }
+
+  const groups = getBaseComposerGroups(entryType);
   const activeGroup = groups.find((group) => group.id === composerGroup) || groups[0];
   if (!activeGroup) return list;
 
@@ -961,6 +1025,84 @@ function renderComposerCategoryTabs() {
     .join("");
 }
 
+function setRecentCategoryIds(type, ids) {
+  state.recentCategories = normalizeRecentCategories(
+    {
+      ...state.recentCategories,
+      [type]: ids
+    },
+    state.categories
+  );
+}
+
+function toggleRecentCategory(categoryId) {
+  const ids = getRecentCategoryIds(managerType);
+  const exists = ids.includes(categoryId);
+
+  if (!exists && ids.length >= RECENT_CATEGORY_LIMIT) {
+    showToast(`最近最多添加 ${RECENT_CATEGORY_LIMIT} 个分类`);
+    return;
+  }
+
+  setRecentCategoryIds(
+    managerType,
+    exists ? ids.filter((id) => id !== categoryId) : [...ids, categoryId]
+  );
+  saveState();
+  renderRecentCategoryManager();
+  renderCategoryPicker();
+}
+
+function reorderRecentCategory(type, draggedId, targetId) {
+  if (draggedId === targetId) return;
+  const originalIds = getRecentCategoryIds(type);
+  const fromIndex = originalIds.indexOf(draggedId);
+  const targetOriginalIndex = originalIds.indexOf(targetId);
+  if (fromIndex < 0 || targetOriginalIndex < 0) return;
+
+  const ids = originalIds.filter((id) => id !== draggedId);
+  const targetIndex = ids.indexOf(targetId);
+  ids.splice(targetOriginalIndex > fromIndex ? targetIndex + 1 : targetIndex, 0, draggedId);
+  setRecentCategoryIds(type, ids);
+  renderRecentCategoryManager(draggedId);
+  renderCategoryPicker();
+  saveState();
+}
+
+function renderRecentCategoryManager(draggingId = null) {
+  const list = getCategoryList(managerType);
+  const recentIds = getRecentCategoryIds(managerType);
+  const recentSet = new Set(recentIds);
+  const byId = new Map(list.map((category) => [category.id, category]));
+  const selected = recentIds.map((id) => byId.get(id)).filter(Boolean);
+  const unselected = list.filter((category) => !recentSet.has(category.id));
+  const items = [...selected, ...unselected];
+
+  if (!items.length) {
+    elements.recentCategoryList.innerHTML = `<div class="empty-state">暂无分类</div>`;
+    return;
+  }
+
+  elements.recentCategoryList.innerHTML = items
+    .map((category) => {
+      const active = recentSet.has(category.id);
+      return `
+        <button
+          class="recent-category-item ${active ? "active" : ""} ${draggingId === category.id ? "dragging" : ""}"
+          type="button"
+          data-recent-category="${category.id}"
+          aria-pressed="${active ? "true" : "false"}"
+        >
+          <span class="recent-drag-handle" aria-hidden="true">⋮⋮</span>
+          ${iconMarkup(category)}
+          <span>${escapeHTML(category.label)}</span>
+          <em>${active ? "已添加" : "添加"}</em>
+        </button>
+      `;
+    })
+    .join("");
+}
+
 function getManagerCategory() {
   const list = getCategoryList(managerType);
   return list.find((category) => category.id === managerCategoryId) || list[0];
@@ -978,6 +1120,7 @@ function renderCategoryManager() {
   elements.categoryTypeControl.querySelectorAll("[data-manager-type]").forEach((button) => {
     button.classList.toggle("active", button.dataset.managerType === managerType);
   });
+  renderRecentCategoryManager();
 
   elements.categoryEditorList.innerHTML = list
     .map((item) => `
@@ -1077,6 +1220,67 @@ function setManagerIcon(iconId) {
   render();
 }
 
+function handleRecentCategoryClick(event) {
+  const button = event.target.closest("[data-recent-category]");
+  if (!button) return;
+
+  if (suppressRecentCategoryClick) {
+    event.preventDefault();
+    return;
+  }
+
+  toggleRecentCategory(button.dataset.recentCategory);
+}
+
+function beginRecentCategoryDrag(event) {
+  const button = event.target.closest("[data-recent-category]");
+  if (!button || !button.classList.contains("active")) return;
+  if (event.button !== undefined && event.button !== 0) return;
+
+  recentCategoryDrag = {
+    id: button.dataset.recentCategory,
+    startX: event.clientX,
+    startY: event.clientY,
+    moved: false
+  };
+}
+
+function updateRecentCategoryDrag(event) {
+  if (!recentCategoryDrag) return;
+
+  const distance = Math.hypot(event.clientX - recentCategoryDrag.startX, event.clientY - recentCategoryDrag.startY);
+  if (!recentCategoryDrag.moved && distance < 8) return;
+
+  recentCategoryDrag.moved = true;
+  event.preventDefault();
+
+  const target = [...elements.recentCategoryList.querySelectorAll(".recent-category-item.active")]
+    .find((item) => {
+      const rect = item.getBoundingClientRect();
+      return event.clientX >= rect.left
+        && event.clientX <= rect.right
+        && event.clientY >= rect.top
+        && event.clientY <= rect.bottom;
+    });
+
+  if (target && target.dataset.recentCategory !== recentCategoryDrag.id) {
+    reorderRecentCategory(managerType, recentCategoryDrag.id, target.dataset.recentCategory);
+  }
+}
+
+function endRecentCategoryDrag() {
+  if (!recentCategoryDrag) return;
+
+  if (recentCategoryDrag.moved) {
+    suppressRecentCategoryClick = true;
+    window.setTimeout(() => {
+      suppressRecentCategoryClick = false;
+    }, 0);
+  }
+
+  recentCategoryDrag = null;
+}
+
 function addCustomCategory() {
   commitCategoryName(false);
   const icon = ICON_LIBRARY.find((item) => item.id === (managerType === "income" ? "wallet" : "dots")) || ICON_LIBRARY[0];
@@ -1086,7 +1290,9 @@ function addCustomCategory() {
     icon: icon.id,
     color: icon.color,
     tint: icon.tint,
-    group: managerType === entryType ? composerGroup : defaultComposerGroup(managerType),
+    group: managerType === entryType && composerGroup !== RECENT_COMPOSER_GROUP_ID
+      ? composerGroup
+      : getBaseComposerGroups(managerType)[0]?.id,
     custom: true
   };
 
@@ -1558,6 +1764,12 @@ function bindEvents() {
     if (!button) return;
     setManagerCategory(button.dataset.managerCategory);
   });
+
+  elements.recentCategoryList.addEventListener("click", handleRecentCategoryClick);
+  elements.recentCategoryList.addEventListener("pointerdown", beginRecentCategoryDrag);
+  window.addEventListener("pointermove", updateRecentCategoryDrag);
+  window.addEventListener("pointerup", endRecentCategoryDrag);
+  window.addEventListener("pointercancel", endRecentCategoryDrag);
 
   elements.iconGrid.addEventListener("click", (event) => {
     const button = event.target.closest("[data-icon]");
