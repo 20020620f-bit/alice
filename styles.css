@@ -861,7 +861,7 @@ input[type="range"] {
   justify-items: center;
   gap: 6px;
   min-width: 0;
-  padding: 9px 7px;
+  padding: 10px 7px;
   color: var(--muted);
   background: #fff;
   border: 1px solid var(--line);
@@ -870,7 +870,7 @@ input[type="range"] {
 
 .quick-selected-item {
   min-width: 92px;
-  min-height: 98px;
+  min-height: 88px;
   touch-action: none;
 }
 
@@ -917,19 +917,6 @@ input[type="range"] {
   white-space: nowrap;
 }
 
-.quick-selected-item em,
-.quick-pool-item em {
-  color: var(--muted);
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 800;
-}
-
-.quick-selected-item.selected em,
-.quick-pool-item.selected em {
-  color: var(--blue);
-}
-
 .quick-pool-section {
   display: grid;
   gap: 8px;
@@ -945,7 +932,7 @@ input[type="range"] {
 }
 
 .quick-pool-item {
-  min-height: 86px;
+  min-height: 74px;
 }
 
 .quick-pool-item.added {
@@ -3206,6 +3193,7 @@ body:has(#view-overview.active) .transaction-list.compact {
 }
 
 .note-dialog textarea {
+  box-sizing: border-box;
   width: 100%;
   height: min(30svh, 220px);
   min-height: 160px;
@@ -3213,12 +3201,18 @@ body:has(#view-overview.active) .transaction-list.compact {
   color: #050505;
   resize: none;
   background: #f7f7f7;
-  border: 0;
+  border: 3px solid #8ec4ff;
   border-radius: 16px;
+  outline: 0;
   font: inherit;
   font-size: 17px;
   font-weight: 800;
   line-height: 1.45;
+}
+
+.note-dialog textarea:focus {
+  border-color: #8ec4ff;
+  outline: 0;
 }
 
 .note-dialog textarea::placeholder {

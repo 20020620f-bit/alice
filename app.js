@@ -1145,7 +1145,6 @@ function renderQuickCategoryManager(draggingId = null) {
           <span class="recent-drag-handle" aria-hidden="true">⋮⋮</span>
           ${iconMarkup(category)}
           <span>${escapeHTML(category.label)}</span>
-          <em>已添加</em>
         </button>
       `)
       .join("")
@@ -1163,7 +1162,6 @@ function renderQuickCategoryManager(draggingId = null) {
         >
           ${iconMarkup(category)}
           <span>${escapeHTML(category.label)}</span>
-          <em>${added ? "已在快捷" : "添加"}</em>
         </button>
       `;
     })
