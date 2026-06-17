@@ -7,7 +7,6 @@ const SWIPE_FLING_VELOCITY = 0.25;
 const RECENT_COMPOSER_GROUP_ID = "recent";
 const RECENT_CATEGORY_LIMIT = 15;
 const RECENT_DRAG_HOLD_DELAY = 320;
-const RECENT_DRAG_MOVE_TOLERANCE = 10;
 let activeSwipeGesture = null;
 
 const DEFAULT_CATEGORIES = {
@@ -1401,10 +1400,7 @@ function beginRecentCategoryDrag(event) {
     id: button.dataset.quickSelected,
     type: managerType,
     pointerId: event.pointerId,
-    startX: event.clientX,
-    startY: event.clientY,
     changed: false,
-    moved: false,
     sorting: false,
     timer: window.setTimeout(enterRecentCategorySortMode, RECENT_DRAG_HOLD_DELAY)
   };
@@ -1415,16 +1411,11 @@ function updateRecentCategoryDrag(event) {
   if (!recentCategoryDrag) return;
   if (recentCategoryDrag.pointerId !== event.pointerId) return;
 
-  const distance = Math.hypot(event.clientX - recentCategoryDrag.startX, event.clientY - recentCategoryDrag.startY);
   if (!recentCategoryDrag.sorting) {
-    if (distance > RECENT_DRAG_MOVE_TOLERANCE) {
-      clearRecentCategoryDragTimer();
-      recentCategoryDrag = null;
-    }
+    event.preventDefault();
     return;
   }
 
-  recentCategoryDrag.moved = true;
   event.preventDefault();
 
   const target = [...elements.recentCategoryList.querySelectorAll("[data-quick-selected]")]
