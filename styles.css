@@ -828,6 +828,15 @@ input[type="range"] {
   gap: 14px;
 }
 
+.quick-manager-panel,
+.recent-category-list,
+.quick-selected-item,
+.recent-drag-handle {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .quick-manager-panel[hidden],
 .category-editor-panel[hidden] {
   display: none;
@@ -864,6 +873,12 @@ input[type="range"] {
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 4px;
+  touch-action: pan-x;
+}
+
+.recent-category-list.sorting {
+  overflow-x: hidden;
+  touch-action: none;
 }
 
 .quick-selected-item,
@@ -882,7 +897,7 @@ input[type="range"] {
 .quick-selected-item {
   min-width: 92px;
   min-height: 88px;
-  touch-action: none;
+  touch-action: pan-x;
 }
 
 .quick-selected-item.selected,
@@ -912,10 +927,29 @@ input[type="range"] {
 }
 
 .recent-drag-handle {
+  display: grid;
+  place-items: center;
+  width: 100%;
   height: 10px;
   color: #c4c4c4;
   font-size: 12px;
   line-height: 10px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.recent-category-list.sorting .recent-drag-handle {
+  cursor: grabbing;
+}
+
+.sheet.quick-sorting .category-panel {
+  overflow: hidden;
+}
+
+html.gesture-lock,
+html.gesture-lock body {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .quick-selected-item > span:not(.recent-drag-handle):not(.category-icon),

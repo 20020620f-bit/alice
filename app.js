@@ -6,6 +6,8 @@ const SWIPE_OPEN_THRESHOLD = 0.45;
 const SWIPE_FLING_VELOCITY = 0.25;
 const RECENT_COMPOSER_GROUP_ID = "recent";
 const RECENT_CATEGORY_LIMIT = 15;
+const RECENT_DRAG_HOLD_DELAY = 320;
+const RECENT_DRAG_MOVE_TOLERANCE = 10;
 let activeSwipeGesture = null;
 
 const DEFAULT_CATEGORIES = {
@@ -1055,12 +1057,12 @@ function setRecentCategoryIds(type, ids) {
   );
 }
 
-function reorderRecentCategory(type, draggedId, targetId) {
-  if (draggedId === targetId) return;
+function reorderRecentCategory(type, draggedId, targetId, { persist = true } = {}) {
+  if (draggedId === targetId) return false;
   const originalIds = getRecentCategoryIds(type);
   const fromIndex = originalIds.indexOf(draggedId);
   const targetOriginalIndex = originalIds.indexOf(targetId);
-  if (fromIndex < 0 || targetOriginalIndex < 0) return;
+  if (fromIndex < 0 || targetOriginalIndex < 0) return false;
 
   const ids = originalIds.filter((id) => id !== draggedId);
   const targetIndex = ids.indexOf(targetId);
@@ -1068,7 +1070,10 @@ function reorderRecentCategory(type, draggedId, targetId) {
   setRecentCategoryIds(type, ids);
   renderQuickCategoryManager(draggedId);
   renderCategoryPicker();
-  saveState();
+  if (persist) {
+    saveState();
+  }
+  return true;
 }
 
 function quickManagerCategories(type = managerType) {
@@ -1158,7 +1163,7 @@ function renderQuickCategoryManager(draggingId = null) {
           data-quick-selected="${category.id}"
           aria-pressed="${quickSelectedSelection === category.id ? "true" : "false"}"
         >
-          <span class="recent-drag-handle" aria-hidden="true">⋮⋮</span>
+          <span class="recent-drag-handle" data-quick-drag-handle aria-hidden="true">⋮⋮</span>
           ${iconMarkup(category)}
           <span>${escapeHTML(category.label)}</span>
         </button>
@@ -1360,24 +1365,64 @@ function handleRecentCategoryClick(event) {
   renderQuickCategoryManager();
 }
 
+function clearRecentCategoryDragTimer() {
+  if (!recentCategoryDrag?.timer) return;
+  window.clearTimeout(recentCategoryDrag.timer);
+  recentCategoryDrag.timer = null;
+}
+
+function setRecentCategorySortState(active, draggingId = null) {
+  elements.recentCategoryList.classList.toggle("sorting", active);
+  elements.categorySheet.classList.toggle("quick-sorting", active);
+  document.documentElement.classList.toggle("gesture-lock", active);
+
+  elements.recentCategoryList.querySelectorAll("[data-quick-selected]").forEach((item) => {
+    item.classList.toggle("dragging", active && item.dataset.quickSelected === draggingId);
+  });
+}
+
+function enterRecentCategorySortMode() {
+  if (!recentCategoryDrag) return;
+  recentCategoryDrag.sorting = true;
+  quickSelectedSelection = recentCategoryDrag.id;
+  quickPoolSelection = null;
+  setRecentCategorySortState(true, recentCategoryDrag.id);
+}
+
 function beginRecentCategoryDrag(event) {
-  const button = event.target.closest("[data-quick-selected]");
+  const handle = event.target.closest("[data-quick-drag-handle]");
+  if (!handle) return;
+  const button = handle.closest("[data-quick-selected]");
   if (!button) return;
   if (event.button !== undefined && event.button !== 0) return;
 
+  event.preventDefault();
   recentCategoryDrag = {
     id: button.dataset.quickSelected,
+    type: managerType,
+    pointerId: event.pointerId,
     startX: event.clientX,
     startY: event.clientY,
-    moved: false
+    changed: false,
+    moved: false,
+    sorting: false,
+    timer: window.setTimeout(enterRecentCategorySortMode, RECENT_DRAG_HOLD_DELAY)
   };
+  button.setPointerCapture?.(event.pointerId);
 }
 
 function updateRecentCategoryDrag(event) {
   if (!recentCategoryDrag) return;
+  if (recentCategoryDrag.pointerId !== event.pointerId) return;
 
   const distance = Math.hypot(event.clientX - recentCategoryDrag.startX, event.clientY - recentCategoryDrag.startY);
-  if (!recentCategoryDrag.moved && distance < 8) return;
+  if (!recentCategoryDrag.sorting) {
+    if (distance > RECENT_DRAG_MOVE_TOLERANCE) {
+      clearRecentCategoryDragTimer();
+      recentCategoryDrag = null;
+    }
+    return;
+  }
 
   recentCategoryDrag.moved = true;
   event.preventDefault();
@@ -1392,14 +1437,29 @@ function updateRecentCategoryDrag(event) {
     });
 
   if (target && target.dataset.quickSelected !== recentCategoryDrag.id) {
-    reorderRecentCategory(managerType, recentCategoryDrag.id, target.dataset.quickSelected);
+    const didChange = reorderRecentCategory(recentCategoryDrag.type, recentCategoryDrag.id, target.dataset.quickSelected, { persist: false });
+    recentCategoryDrag.changed = recentCategoryDrag.changed || didChange;
   }
 }
 
-function endRecentCategoryDrag() {
+function endRecentCategoryDrag(event) {
   if (!recentCategoryDrag) return;
+  if (event?.pointerId !== undefined && recentCategoryDrag.pointerId !== event.pointerId) return;
 
-  if (recentCategoryDrag.moved) {
+  const wasSorting = recentCategoryDrag.sorting;
+  const changed = recentCategoryDrag.changed;
+  const draggedId = recentCategoryDrag.id;
+  clearRecentCategoryDragTimer();
+  setRecentCategorySortState(false);
+
+  if (wasSorting) {
+    event?.preventDefault?.();
+    if (changed) {
+      saveState();
+      renderCategoryPicker();
+    }
+    quickSelectedSelection = draggedId;
+    renderQuickCategoryManager();
     suppressRecentCategoryClick = true;
     window.setTimeout(() => {
       suppressRecentCategoryClick = false;
