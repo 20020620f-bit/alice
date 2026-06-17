@@ -6,7 +6,8 @@ const SWIPE_OPEN_THRESHOLD = 0.45;
 const SWIPE_FLING_VELOCITY = 0.25;
 const RECENT_COMPOSER_GROUP_ID = "recent";
 const RECENT_CATEGORY_LIMIT = 15;
-const RECENT_DRAG_HOLD_DELAY = 320;
+const RECENT_DRAG_HOLD_DELAY = 360;
+const RECENT_DRAG_CANCEL_DISTANCE = 10;
 let activeSwipeGesture = null;
 
 const DEFAULT_CATEGORIES = {
@@ -1162,7 +1163,6 @@ function renderQuickCategoryManager(draggingId = null) {
           data-quick-selected="${category.id}"
           aria-pressed="${quickSelectedSelection === category.id ? "true" : "false"}"
         >
-          <span class="recent-drag-handle" data-quick-drag-handle aria-hidden="true">⋮⋮</span>
           ${iconMarkup(category)}
           <span>${escapeHTML(category.label)}</span>
         </button>
@@ -1386,25 +1386,27 @@ function enterRecentCategorySortMode() {
   quickSelectedSelection = recentCategoryDrag.id;
   quickPoolSelection = null;
   setRecentCategorySortState(true, recentCategoryDrag.id);
+  recentCategoryDrag.button?.setPointerCapture?.(recentCategoryDrag.pointerId);
 }
 
 function beginRecentCategoryDrag(event) {
-  const handle = event.target.closest("[data-quick-drag-handle]");
-  if (!handle) return;
-  const button = handle.closest("[data-quick-selected]");
+  const icon = event.target.closest(".category-icon");
+  if (!icon) return;
+  const button = icon.closest("[data-quick-selected]");
   if (!button) return;
   if (event.button !== undefined && event.button !== 0) return;
 
-  event.preventDefault();
   recentCategoryDrag = {
     id: button.dataset.quickSelected,
     type: managerType,
+    button,
     pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
     changed: false,
     sorting: false,
     timer: window.setTimeout(enterRecentCategorySortMode, RECENT_DRAG_HOLD_DELAY)
   };
-  button.setPointerCapture?.(event.pointerId);
 }
 
 function updateRecentCategoryDrag(event) {
@@ -1412,7 +1414,11 @@ function updateRecentCategoryDrag(event) {
   if (recentCategoryDrag.pointerId !== event.pointerId) return;
 
   if (!recentCategoryDrag.sorting) {
-    event.preventDefault();
+    const distance = Math.hypot(event.clientX - recentCategoryDrag.startX, event.clientY - recentCategoryDrag.startY);
+    if (distance > RECENT_DRAG_CANCEL_DISTANCE) {
+      clearRecentCategoryDragTimer();
+      recentCategoryDrag = null;
+    }
     return;
   }
 

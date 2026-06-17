@@ -830,8 +830,7 @@ input[type="range"] {
 
 .quick-manager-panel,
 .recent-category-list,
-.quick-selected-item,
-.recent-drag-handle {
+.quick-selected-item {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -911,34 +910,30 @@ input[type="range"] {
 }
 
 .quick-selected-item .category-icon,
-.quick-pool-item .category-icon {
-  width: 30px;
-  height: 30px;
+.quick-pool-item .category-icon,
+.category-editor-item .category-icon {
+  width: 34px;
+  height: 34px;
   background: transparent;
-  border-radius: 0;
+  border-radius: 8px;
+}
+
+.quick-selected-item .category-icon {
+  cursor: grab;
+  touch-action: pan-x;
 }
 
 .quick-selected-item .category-icon svg,
-.quick-pool-item .category-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.recent-drag-handle {
-  display: grid;
-  place-items: center;
-  width: 100%;
+.quick-pool-item .category-icon svg,
+.category-editor-item .category-icon svg {
+  width: 24px;
   height: 24px;
-  margin: -4px 0 -6px;
-  color: #c4c4c4;
-  font-size: 14px;
-  line-height: 1;
-  cursor: grab;
-  touch-action: none;
+  stroke-width: 2.4;
 }
 
-.recent-category-list.sorting .recent-drag-handle {
+.recent-category-list.sorting .quick-selected-item .category-icon {
   cursor: grabbing;
+  touch-action: none;
 }
 
 .recent-category-list.sorting .quick-selected-item.dragging {
@@ -958,7 +953,7 @@ html.gesture-lock body {
   overscroll-behavior: none;
 }
 
-.quick-selected-item > span:not(.recent-drag-handle):not(.category-icon),
+.quick-selected-item > span:not(.category-icon),
 .quick-pool-item > span:not(.category-icon) {
   overflow: hidden;
   max-width: 100%;
@@ -1014,19 +1009,21 @@ html.gesture-lock body {
 .category-editor-item {
   display: grid;
   justify-items: center;
-  gap: 7px;
+  gap: 10px;
   min-width: 92px;
-  min-height: 82px;
-  padding: 10px 8px;
+  min-height: 92px;
+  padding: 12px 5px 10px;
   color: var(--ink);
-  background: #f7f9f3;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  background: #fff;
+  border: 3px solid transparent;
+  border-radius: 18px;
+  box-shadow: 0 8px 22px rgba(24, 31, 34, 0.035);
 }
 
 .category-editor-item.active {
-  background: var(--teal-soft);
-  border-color: rgba(11, 128, 104, 0.32);
+  background: #fff;
+  border-color: #2387ff;
+  box-shadow: none;
 }
 
 .category-editor-item span {
@@ -1034,9 +1031,13 @@ html.gesture-lock body {
   max-width: 100%;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.category-editor-item.active span {
+  color: var(--ink);
 }
 
 .icon-grid {
@@ -1054,19 +1055,21 @@ html.gesture-lock body {
   min-width: 0;
   aspect-ratio: 1;
   color: var(--category-color, var(--teal));
-  background: var(--category-bg, var(--teal-soft));
-  border: 1px solid transparent;
-  border-radius: var(--radius);
+  background: #fff;
+  border: 3px solid transparent;
+  border-radius: 18px;
+  box-shadow: 0 8px 22px rgba(24, 31, 34, 0.035);
 }
 
 .icon-option.active {
-  border-color: currentColor;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+  border-color: #2387ff;
+  box-shadow: none;
 }
 
 .icon-option svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.4;
 }
 
 .category-actions {
