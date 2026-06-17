@@ -822,6 +822,17 @@ input[type="range"] {
   gap: 14px;
 }
 
+.quick-manager-panel,
+.category-editor-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.quick-manager-panel[hidden],
+.category-editor-panel[hidden] {
+  display: none;
+}
+
 .recent-manager {
   display: grid;
   gap: 8px;
@@ -945,6 +956,15 @@ input[type="range"] {
 
 .danger-button {
   color: var(--danger);
+}
+
+.category-editor-list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(92px, 1fr);
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
 .category-editor-item {

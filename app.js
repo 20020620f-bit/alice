@@ -141,11 +141,21 @@ const elements = {
   composerKeypad: document.querySelector("#composerKeypad"),
   openCategoryManager: document.querySelector("#openCategoryManager"),
   categorySheet: document.querySelector("#categorySheet"),
+  categoryManagerKicker: document.querySelector("#categoryManagerKicker"),
+  categoryManagerTitle: document.querySelector("#categoryManagerTitle"),
+  quickManagerPanel: document.querySelector("#quickManagerPanel"),
+  categoryEditorPanel: document.querySelector("#categoryEditorPanel"),
+  categoryTypeControl: document.querySelector("#categoryTypeControl"),
   recentCategoryList: document.querySelector("#recentCategoryList"),
   quickCategoryPool: document.querySelector("#quickCategoryPool"),
   quickCount: document.querySelector("#quickCount"),
   addQuickCategory: document.querySelector("#addQuickCategory"),
   removeQuickCategory: document.querySelector("#removeQuickCategory"),
+  saveQuickCategory: document.querySelector("#saveQuickCategory"),
+  categoryEditorList: document.querySelector("#categoryEditorList"),
+  categoryNameInput: document.querySelector("#categoryNameInput"),
+  iconGrid: document.querySelector("#iconGrid"),
+  addCategory: document.querySelector("#addCategory"),
   saveCategory: document.querySelector("#saveCategory"),
   resetForm: document.querySelector("#resetForm"),
   openComposer: document.querySelector("#openComposer"),
@@ -166,6 +176,8 @@ let entryType = "expense";
 let selectedCategory = DEFAULT_CATEGORIES.expense[0].id;
 let composerGroup = COMPOSER_GROUPS.expense[0].id;
 let managerType = "expense";
+let managerCategoryId = DEFAULT_CATEGORIES.expense[0].id;
+let categorySheetMode = "quick";
 let editingEntryId = null;
 let composerReturnContext = null;
 let recentCategoryDrag = null;
@@ -1027,6 +1039,10 @@ function renderComposerCategoryTabs() {
       </button>
     `)
     .join("");
+  elements.openCategoryManager.setAttribute(
+    "aria-label",
+    composerGroup === RECENT_COMPOSER_GROUP_ID ? "管理快捷" : "管理分类"
+  );
 }
 
 function setRecentCategoryIds(type, ids) {
@@ -1179,24 +1195,149 @@ function renderQuickCategoryManager(draggingId = null) {
   }
 }
 
+function getManagerCategory() {
+  const list = getCategoryList(managerType);
+  return list.find((category) => category.id === managerCategoryId) || list[0];
+}
+
+function setCategorySheetMode(mode) {
+  categorySheetMode = mode;
+  const isQuickMode = mode === "quick";
+
+  elements.categoryManagerKicker.textContent = isQuickMode ? "快捷" : "分类";
+  elements.categoryManagerTitle.textContent = isQuickMode ? "设置快捷" : "管理分类";
+  elements.quickManagerPanel.hidden = !isQuickMode;
+  elements.categoryEditorPanel.hidden = isQuickMode;
+}
+
+function renderCategoryEditor() {
+  const list = getCategoryList(managerType);
+  if (!list.length) return;
+
+  if (!list.some((category) => category.id === managerCategoryId)) {
+    managerCategoryId = list[0].id;
+  }
+
+  const category = getManagerCategory();
+  elements.categoryTypeControl.querySelectorAll("[data-manager-type]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.managerType === managerType);
+  });
+
+  elements.categoryEditorList.innerHTML = list
+    .map((item) => `
+      <button class="category-editor-item ${item.id === category.id ? "active" : ""}" type="button" data-manager-category="${item.id}">
+        ${iconMarkup(item)}
+        <span>${escapeHTML(item.label)}</span>
+      </button>
+    `)
+    .join("");
+
+  elements.categoryNameInput.value = category.label;
+  elements.iconGrid.innerHTML = ICON_LIBRARY
+    .map((icon) => `
+      <button
+        class="icon-option ${icon.id === category.icon ? "active" : ""}"
+        type="button"
+        data-icon="${icon.id}"
+        aria-label="${escapeHTML(icon.label)}"
+        title="${escapeHTML(icon.label)}"
+        style="--category-color: ${icon.color}; --category-bg: ${icon.tint}"
+      >
+        <svg><use href="#icon-${icon.id}"></use></svg>
+      </button>
+    `)
+    .join("");
+}
+
 function renderCategoryManager() {
-  renderQuickCategoryManager();
+  if (categorySheetMode === "quick") {
+    renderQuickCategoryManager();
+    return;
+  }
+  renderCategoryEditor();
 }
 
 function openCategoryManager() {
   managerType = entryType;
   quickPoolSelection = null;
   quickSelectedSelection = null;
+  if (composerGroup === RECENT_COMPOSER_GROUP_ID) {
+    setCategorySheetMode("quick");
+  } else {
+    setCategorySheetMode("editor");
+    const list = getCategoryList(managerType);
+    managerCategoryId = list.some((category) => category.id === selectedCategory)
+      ? selectedCategory
+      : list[0]?.id;
+  }
   renderCategoryManager();
   elements.categorySheet.classList.add("open");
   elements.categorySheet.setAttribute("aria-hidden", "false");
+  if (categorySheetMode === "editor") {
+    window.setTimeout(() => elements.categoryNameInput.focus(), 120);
+  }
 }
 
-function closeCategoryManager() {
+function commitCategoryName(showMessage = false) {
+  const category = getManagerCategory();
+  const nextName = elements.categoryNameInput.value.trim();
+  if (!category) return false;
+
+  if (!nextName) {
+    elements.categoryNameInput.value = category.label;
+    showToast("分类名称不能为空");
+    return false;
+  }
+
+  const defaultCategory = getDefaultCategory(managerType, category.id);
+  category.label = nextName;
+  category.customLabel = defaultCategory ? nextName !== defaultCategory.label : true;
+  saveState();
+  renderCategoryPicker();
+  render();
+  renderCategoryEditor();
+  if (showMessage) {
+    showToast("分类已保存");
+  }
+  return true;
+}
+
+function closeCategoryManager({ commit = true } = {}) {
+  if (commit && categorySheetMode === "editor" && elements.categorySheet.classList.contains("open")) {
+    commitCategoryName(false);
+  }
   elements.categorySheet.classList.remove("open");
   elements.categorySheet.setAttribute("aria-hidden", "true");
   quickPoolSelection = null;
   quickSelectedSelection = null;
+}
+
+function setManagerType(type) {
+  commitCategoryName(false);
+  managerType = type;
+  managerCategoryId = getCategoryList(type)[0]?.id;
+  renderCategoryEditor();
+}
+
+function setManagerCategory(categoryId) {
+  commitCategoryName(false);
+  managerCategoryId = categoryId;
+  renderCategoryEditor();
+}
+
+function setManagerIcon(iconId) {
+  commitCategoryName(false);
+  const category = getManagerCategory();
+  const icon = ICON_LIBRARY.find((item) => item.id === iconId);
+  if (!category || !icon) return;
+
+  category.icon = icon.id;
+  category.color = icon.color;
+  category.tint = icon.tint;
+  saveState();
+  renderCategoryEditor();
+  renderCategoryPicker();
+  render();
 }
 
 function handleRecentCategoryClick(event) {
@@ -1266,6 +1407,33 @@ function endRecentCategoryDrag() {
   }
 
   recentCategoryDrag = null;
+}
+
+function addCustomCategory() {
+  commitCategoryName(false);
+  const icon = ICON_LIBRARY.find((item) => item.id === (managerType === "income" ? "wallet" : "dots")) || ICON_LIBRARY[0];
+  const category = {
+    id: `custom-${managerType}-${Date.now()}`,
+    label: managerType === "income" ? "新收入" : "新支出",
+    icon: icon.id,
+    color: icon.color,
+    tint: icon.tint,
+    group: managerType === entryType && composerGroup !== RECENT_COMPOSER_GROUP_ID
+      ? composerGroup
+      : getBaseComposerGroups(managerType)[0]?.id,
+    custom: true
+  };
+
+  state.categories[managerType].push(category);
+  managerCategoryId = category.id;
+  if (managerType === entryType) {
+    selectedCategory = category.id;
+  }
+  saveState();
+  renderCategoryEditor();
+  renderCategoryPicker();
+  render();
+  window.setTimeout(() => elements.categoryNameInput.select(), 60);
 }
 
 function setEntryType(type) {
@@ -1713,6 +1881,18 @@ function bindEvents() {
     button.addEventListener("click", () => setEntryType(button.dataset.entryType));
   });
 
+  elements.categoryTypeControl.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-manager-type]");
+    if (!button) return;
+    setManagerType(button.dataset.managerType);
+  });
+
+  elements.categoryEditorList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-manager-category]");
+    if (!button) return;
+    setManagerCategory(button.dataset.managerCategory);
+  });
+
   elements.recentCategoryList.addEventListener("click", handleRecentCategoryClick);
   elements.recentCategoryList.addEventListener("pointerdown", beginRecentCategoryDrag);
   elements.quickCategoryPool.addEventListener("click", handleRecentCategoryClick);
@@ -1722,7 +1902,19 @@ function bindEvents() {
   window.addEventListener("pointerup", endRecentCategoryDrag);
   window.addEventListener("pointercancel", endRecentCategoryDrag);
 
-  elements.saveCategory.addEventListener("click", closeCategoryManager);
+  elements.iconGrid.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-icon]");
+    if (!button) return;
+    setManagerIcon(button.dataset.icon);
+  });
+
+  elements.addCategory.addEventListener("click", addCustomCategory);
+  elements.saveQuickCategory.addEventListener("click", closeCategoryManager);
+  elements.saveCategory.addEventListener("click", () => {
+    if (commitCategoryName(true)) {
+      closeCategoryManager({ commit: false });
+    }
+  });
 
   elements.categoryPicker.addEventListener("click", (event) => {
     const button = event.target.closest("[data-category]");

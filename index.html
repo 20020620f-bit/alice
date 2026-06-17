@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest?v=30">
     <link rel="apple-touch-icon" href="assets/app-icon-180.png?v=30">
     <link rel="icon" href="assets/app-icon-192.png?v=30" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=38">
+    <link rel="stylesheet" href="styles.css?v=39">
   </head>
   <body>
     <svg class="sprite" aria-hidden="true">
@@ -469,7 +469,7 @@
       <div class="sheet-panel category-panel">
         <header class="sheet-header">
           <div>
-            <span>快捷</span>
+            <span id="categoryManagerKicker">快捷</span>
             <strong id="categoryManagerTitle">设置快捷</strong>
           </div>
           <button class="icon-button" type="button" data-close-category-sheet aria-label="关闭">
@@ -477,26 +477,53 @@
           </button>
         </header>
 
-        <div class="recent-manager">
-          <div class="recent-manager-head">
-            <span>快捷</span>
-            <strong id="quickCount">0/15</strong>
+        <div class="quick-manager-panel" id="quickManagerPanel">
+          <div class="recent-manager">
+            <div class="recent-manager-head">
+              <span>快捷</span>
+              <strong id="quickCount">0/15</strong>
+            </div>
+            <div class="recent-category-list" id="recentCategoryList" aria-label="快捷分类设置"></div>
           </div>
-          <div class="recent-category-list" id="recentCategoryList" aria-label="快捷分类设置"></div>
+
+          <div class="quick-pool-section">
+            <div class="recent-manager-head">
+              <span>新增</span>
+              <strong>从全部分类中选择</strong>
+            </div>
+            <div class="quick-category-pool" id="quickCategoryPool" aria-label="全部分类"></div>
+          </div>
+
+          <div class="sheet-actions category-actions quick-actions">
+            <button class="secondary-button" type="button" id="addQuickCategory">添加</button>
+            <button class="secondary-button danger-button" type="button" id="removeQuickCategory">删除</button>
+            <button class="primary-button" type="button" id="saveQuickCategory">保存</button>
+          </div>
         </div>
 
-        <div class="quick-pool-section">
-          <div class="recent-manager-head">
-            <span>新增</span>
-            <strong>从全部分类中选择</strong>
+        <div class="category-editor-panel" id="categoryEditorPanel" hidden>
+          <div class="segmented entry-type" id="categoryTypeControl" role="tablist" aria-label="分类类型">
+            <button class="active" type="button" data-manager-type="expense">支出</button>
+            <button type="button" data-manager-type="income">收入</button>
           </div>
-          <div class="quick-category-pool" id="quickCategoryPool" aria-label="全部分类"></div>
-        </div>
 
-        <div class="sheet-actions category-actions quick-actions">
-          <button class="secondary-button" type="button" id="addQuickCategory">添加</button>
-          <button class="secondary-button danger-button" type="button" id="removeQuickCategory">删除</button>
-          <button class="primary-button" type="button" id="saveCategory">保存</button>
+          <div class="category-editor-list" id="categoryEditorList"></div>
+
+          <label class="category-name-field">
+            <span>分类名称</span>
+            <input id="categoryNameInput" type="text" maxlength="12" placeholder="输入分类名称">
+          </label>
+
+          <div class="icon-picker-head">
+            <span>图标</span>
+            <strong>点击切换</strong>
+          </div>
+          <div class="icon-grid" id="iconGrid" aria-label="选择图标"></div>
+
+          <div class="sheet-actions category-actions">
+            <button class="secondary-button" type="button" id="addCategory">新增分类</button>
+            <button class="primary-button" type="button" id="saveCategory">完成</button>
+          </div>
         </div>
       </div>
     </section>
@@ -558,6 +585,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="vendor/hammer.min.js?v=29"></script>
-    <script src="app.js?v=38"></script>
+    <script src="app.js?v=39"></script>
   </body>
 </html>
