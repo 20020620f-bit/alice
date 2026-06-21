@@ -55,6 +55,8 @@ const ICON_LIBRARY = [
   { id: "plane", label: "旅行", color: "#4d7897", tint: "#dcecf5" },
   { id: "gift", label: "礼物", color: "#cc3f6d", tint: "#f8dce6" },
   { id: "baby", label: "育儿", color: "#c39122", tint: "#f7edcc" },
+  { id: "cat", label: "猫", color: "#c39122", tint: "#f7edcc" },
+  { id: "dog", label: "狗", color: "#875f3f", tint: "#efe3d7" },
   { id: "briefcase", label: "工作", color: "#0b8068", tint: "#d8eee7" },
   { id: "spark", label: "奖金", color: "#c39122", tint: "#f7edcc" },
   { id: "clock", label: "兼职", color: "#4d7897", tint: "#dcecf5" },
