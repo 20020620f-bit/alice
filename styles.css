@@ -53,7 +53,9 @@ button {
 }
 
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+.quick-selected-item:focus-visible,
+.category-editor-item:focus-visible {
   outline: 3px solid rgba(11, 128, 104, 0.24);
   outline-offset: 2px;
 }
@@ -829,8 +831,11 @@ input[type="range"] {
 }
 
 .quick-manager-panel,
+.category-editor-panel,
 .recent-category-list,
-.quick-selected-item {
+.category-editor-list,
+.quick-selected-item,
+.category-editor-item {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -867,16 +872,14 @@ input[type="range"] {
 
 .recent-category-list {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(92px, 1fr);
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  touch-action: pan-x;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  overflow: visible;
+  padding-bottom: 2px;
+  touch-action: manipulation;
 }
 
 .recent-category-list.sorting {
-  overflow-x: hidden;
   touch-action: none;
 }
 
@@ -895,13 +898,14 @@ input[type="range"] {
 }
 
 .quick-selected-item {
-  min-width: 92px;
+  min-width: 0;
   min-height: 92px;
-  touch-action: pan-x;
+  cursor: grab;
+  touch-action: manipulation;
+  -webkit-user-drag: none;
 }
 
 .quick-selected-item.selected,
-.quick-selected-item.dragging,
 .quick-pool-item.selected {
   color: var(--ink);
   background: #fff;
@@ -919,8 +923,7 @@ input[type="range"] {
 }
 
 .quick-selected-item .category-icon {
-  cursor: grab;
-  touch-action: pan-x;
+  cursor: inherit;
 }
 
 .quick-selected-item .category-icon svg,
@@ -931,19 +934,34 @@ input[type="range"] {
   stroke-width: 2.4;
 }
 
-.recent-category-list.sorting .quick-selected-item .category-icon {
+.recent-category-list.sorting .quick-selected-item,
+.category-editor-list.sorting .category-editor-item,
+.recent-category-list.sorting .quick-selected-item .category-icon,
+.category-editor-list.sorting .category-editor-item .category-icon,
+.quick-selected-item.sortable-chosen .category-icon,
+.quick-selected-item.sortable-drag .category-icon,
+.category-editor-item.sortable-chosen .category-icon,
+.category-editor-item.sortable-drag .category-icon {
   cursor: grabbing;
-  touch-action: none;
 }
 
-.recent-category-list.sorting .quick-selected-item.dragging {
+.quick-selected-item.sortable-chosen,
+.quick-selected-item.sortable-drag,
+.category-editor-item.sortable-chosen,
+.category-editor-item.sortable-drag {
   box-shadow:
     inset 0 0 0 2px #2387ff,
     0 12px 26px rgba(36, 131, 242, 0.18);
   transform: scale(1.03);
 }
 
-.sheet.quick-sorting .category-panel {
+.quick-selected-item.sortable-ghost,
+.category-editor-item.sortable-ghost {
+  opacity: 0.35;
+}
+
+.sheet.quick-sorting .category-panel,
+.sheet.category-sorting .category-panel {
   overflow: hidden;
 }
 
@@ -1004,6 +1022,11 @@ html.gesture-lock body {
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 4px;
+  touch-action: pan-x;
+}
+
+.category-editor-list.sorting {
+  touch-action: none;
 }
 
 .category-editor-item {
@@ -1018,6 +1041,9 @@ html.gesture-lock body {
   border: 3px solid transparent;
   border-radius: 18px;
   box-shadow: 0 8px 22px rgba(24, 31, 34, 0.035);
+  cursor: grab;
+  touch-action: manipulation;
+  -webkit-user-drag: none;
 }
 
 .category-editor-item.active {
@@ -1026,7 +1052,7 @@ html.gesture-lock body {
   box-shadow: none;
 }
 
-.category-editor-item span {
+.category-editor-item > span:not(.category-icon) {
   overflow: hidden;
   max-width: 100%;
   color: var(--muted);
@@ -1036,7 +1062,7 @@ html.gesture-lock body {
   white-space: nowrap;
 }
 
-.category-editor-item.active span {
+.category-editor-item.active > span:not(.category-icon) {
   color: var(--ink);
 }
 

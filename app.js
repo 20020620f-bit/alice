@@ -6,8 +6,6 @@ const SWIPE_OPEN_THRESHOLD = 0.45;
 const SWIPE_FLING_VELOCITY = 0.25;
 const RECENT_COMPOSER_GROUP_ID = "recent";
 const RECENT_CATEGORY_LIMIT = 15;
-const RECENT_DRAG_HOLD_DELAY = 360;
-const RECENT_DRAG_CANCEL_DISTANCE = 10;
 let activeSwipeGesture = null;
 
 const DEFAULT_CATEGORIES = {
@@ -182,8 +180,10 @@ let managerCategoryId = DEFAULT_CATEGORIES.expense[0].id;
 let categorySheetMode = "quick";
 let editingEntryId = null;
 let composerReturnContext = null;
-let recentCategoryDrag = null;
 let suppressRecentCategoryClick = false;
+let suppressCategoryEditorClick = false;
+let quickSortable = null;
+let categorySortable = null;
 let quickPoolSelection = null;
 let quickSelectedSelection = null;
 let toastTimer = null;
@@ -256,21 +256,37 @@ function normalizeCategories(savedCategories, entries = []) {
   ["expense", "income"].forEach((type) => {
     const savedList = Array.isArray(savedCategories?.[type]) ? savedCategories[type] : [];
     const savedById = new Map(savedList.map((category) => [category.id, category]));
-    const defaultIds = new Set(normalized[type].map((category) => category.id));
-
-    normalized[type] = normalized[type].map((category) => {
-      const saved = savedById.get(category.id);
-      if (!saved) return normalizeCategory(category, category);
-      const label = saved.customLabel ? saved.label : category.label;
-      return normalizeCategory({ ...saved, label }, category);
-    });
+    const defaults = normalized[type];
+    const defaultById = new Map(defaults.map((category) => [category.id, category]));
+    const defaultIds = new Set(defaults.map((category) => category.id));
+    const seen = new Set();
+    const ordered = [];
 
     savedList.forEach((category) => {
+      if (!category?.id || seen.has(category.id)) return;
+      const defaultCategory = defaultById.get(category.id);
+      if (defaultCategory) {
+        const label = category.customLabel ? category.label : defaultCategory.label;
+        ordered.push(normalizeCategory({ ...category, label }, defaultCategory));
+        seen.add(category.id);
+        return;
+      }
+
       const isOldDefault = LEGACY_DEFAULT_CATEGORY_IDS.has(category.id) && !category.custom;
       if (!defaultIds.has(category.id) && (!isOldDefault || usedCategoryIds.has(category.id))) {
-        normalized[type].push(normalizeCategory(category, { custom: true }));
+        ordered.push(normalizeCategory(category, { custom: true }));
+        seen.add(category.id);
       }
     });
+
+    defaults.forEach((category) => {
+      if (seen.has(category.id)) return;
+      const saved = savedById.get(category.id);
+      const label = saved?.customLabel ? saved.label : category.label;
+      ordered.push(normalizeCategory({ ...category, ...saved, label }, category));
+    });
+
+    normalized[type] = ordered;
   });
 
   return normalized;
@@ -1057,23 +1073,168 @@ function setRecentCategoryIds(type, ids) {
   );
 }
 
-function reorderRecentCategory(type, draggedId, targetId, { persist = true } = {}) {
-  if (draggedId === targetId) return false;
-  const originalIds = getRecentCategoryIds(type);
-  const fromIndex = originalIds.indexOf(draggedId);
-  const targetOriginalIndex = originalIds.indexOf(targetId);
-  if (fromIndex < 0 || targetOriginalIndex < 0) return false;
+function normalizeRecentCategoryIdList(type, ids) {
+  return normalizeRecentCategories({ [type]: ids }, state.categories)[type];
+}
 
-  const ids = originalIds.filter((id) => id !== draggedId);
-  const targetIndex = ids.indexOf(targetId);
-  ids.splice(targetOriginalIndex > fromIndex ? targetIndex + 1 : targetIndex, 0, draggedId);
-  setRecentCategoryIds(type, ids);
-  renderQuickCategoryManager(draggedId);
-  renderCategoryPicker();
-  if (persist) {
-    saveState();
+function commitQuickCategories(ids, { renderManager = true, message = "" } = {}) {
+  setRecentCategoryIds(managerType, ids);
+  saveState();
+  if (renderManager) {
+    renderQuickCategoryManager();
   }
-  return true;
+  renderCategoryPicker();
+  if (message) {
+    showToast(message);
+  }
+}
+
+function setQuickSortingActive(active) {
+  elements.recentCategoryList.classList.toggle("sorting", active);
+  elements.categorySheet.classList.toggle("quick-sorting", active);
+  document.documentElement.classList.toggle("gesture-lock", active);
+}
+
+function setCategorySortingActive(active) {
+  elements.categoryEditorList.classList.toggle("sorting", active);
+  elements.categorySheet.classList.toggle("category-sorting", active);
+  document.documentElement.classList.toggle("gesture-lock", active);
+}
+
+function readQuickOrderFromDom() {
+  return normalizeRecentCategoryIdList(
+    managerType,
+    [...elements.recentCategoryList.querySelectorAll("[data-quick-selected]")]
+      .map((item) => item.dataset.quickSelected)
+  );
+}
+
+function syncQuickOrderFromDom() {
+  const ids = readQuickOrderFromDom();
+  commitQuickCategories(ids, { renderManager: false });
+}
+
+function sortableTouchOptions() {
+  return {
+    animation: 190,
+    easing: "cubic-bezier(0.2, 0, 0, 1)",
+    delay: 360,
+    delayOnTouchOnly: true,
+    touchStartThreshold: 8,
+    forceFallback: true,
+    fallbackOnBody: true,
+    fallbackTolerance: 3,
+    scroll: true,
+    scrollSensitivity: 72,
+    scrollSpeed: 14,
+    bubbleScroll: false,
+    chosenClass: "sortable-chosen",
+    ghostClass: "sortable-ghost",
+    dragClass: "sortable-drag",
+    setData() {}
+  };
+}
+
+function initQuickSortable() {
+  if (!window.Sortable || !elements.recentCategoryList) return;
+
+  if (quickSortable) {
+    quickSortable.option("disabled", categorySheetMode !== "quick");
+    return;
+  }
+
+  quickSortable = window.Sortable.create(elements.recentCategoryList, {
+    ...sortableTouchOptions(),
+    draggable: ".quick-selected-item",
+    onStart(event) {
+      quickSelectedSelection = event.item?.dataset.quickSelected || quickSelectedSelection;
+      quickPoolSelection = null;
+      setQuickSortingActive(true);
+    },
+    onEnd(event) {
+      setQuickSortingActive(false);
+      if (event.oldIndex !== event.newIndex) {
+        syncQuickOrderFromDom();
+      }
+      suppressRecentCategoryClick = true;
+      window.setTimeout(() => {
+        suppressRecentCategoryClick = false;
+      }, 0);
+    },
+    onChoose(event) {
+      quickSelectedSelection = event.item?.dataset.quickSelected || quickSelectedSelection;
+      quickPoolSelection = null;
+    }
+  });
+}
+
+function readCategoryOrderFromDom() {
+  const ids = [...elements.categoryEditorList.querySelectorAll("[data-manager-category]")]
+    .map((item) => item.dataset.managerCategory);
+  const current = getCategoryList(managerType);
+  const byId = new Map(current.map((category) => [category.id, category]));
+  const used = new Set();
+  const ordered = ids
+    .map((id) => {
+      used.add(id);
+      return byId.get(id);
+    })
+    .filter(Boolean);
+
+  current.forEach((category) => {
+    if (!used.has(category.id)) {
+      ordered.push(category);
+    }
+  });
+
+  return ordered;
+}
+
+function syncCategoryOrderFromDom() {
+  const ordered = readCategoryOrderFromDom();
+  state.categories[managerType] = ordered;
+  state.recentCategories = normalizeRecentCategories(state.recentCategories, state.categories);
+  saveState();
+
+  if (!ordered.some((category) => category.id === managerCategoryId)) {
+    managerCategoryId = ordered[0]?.id;
+  }
+
+  renderCategoryPicker();
+  render();
+}
+
+function initCategorySortable() {
+  if (!window.Sortable || !elements.categoryEditorList) return;
+
+  if (categorySortable) {
+    categorySortable.option("disabled", categorySheetMode !== "editor");
+    return;
+  }
+
+  categorySortable = window.Sortable.create(elements.categoryEditorList, {
+    ...sortableTouchOptions(),
+    draggable: ".category-editor-item",
+    direction: "horizontal",
+    onStart(event) {
+      commitCategoryName(false, { renderEditor: false });
+      managerCategoryId = event.item?.dataset.managerCategory || managerCategoryId;
+      setCategorySortingActive(true);
+    },
+    onEnd(event) {
+      setCategorySortingActive(false);
+      if (event.oldIndex !== event.newIndex) {
+        syncCategoryOrderFromDom();
+      }
+      suppressCategoryEditorClick = true;
+      window.setTimeout(() => {
+        suppressCategoryEditorClick = false;
+      }, 0);
+    },
+    onChoose(event) {
+      managerCategoryId = event.item?.dataset.managerCategory || managerCategoryId;
+    }
+  });
 }
 
 function quickManagerCategories(type = managerType) {
@@ -1120,12 +1281,9 @@ function addQuickCategory(categoryId = quickPoolSelection) {
     return;
   }
 
-  setRecentCategoryIds(managerType, [...ids, categoryId]);
   quickSelectedSelection = categoryId;
   quickPoolSelection = null;
-  saveState();
-  renderQuickCategoryManager();
-  renderCategoryPicker();
+  commitQuickCategories([...ids, categoryId]);
 }
 
 function removeQuickCategory(categoryId = quickSelectedSelection) {
@@ -1133,17 +1291,14 @@ function removeQuickCategory(categoryId = quickSelectedSelection) {
   const ids = getRecentCategoryIds(managerType);
   if (!ids.includes(categoryId)) return;
 
-  setRecentCategoryIds(managerType, ids.filter((id) => id !== categoryId));
   quickSelectedSelection = null;
   if (quickPoolSelection === categoryId) {
     quickPoolSelection = null;
   }
-  saveState();
-  renderQuickCategoryManager();
-  renderCategoryPicker();
+  commitQuickCategories(ids.filter((id) => id !== categoryId));
 }
 
-function renderQuickCategoryManager(draggingId = null) {
+function renderQuickCategoryManager() {
   const list = quickManagerCategories(managerType);
   const recentIds = getRecentCategoryIds(managerType);
   const recentSet = new Set(recentIds);
@@ -1157,15 +1312,16 @@ function renderQuickCategoryManager(draggingId = null) {
   elements.recentCategoryList.innerHTML = selected.length
     ? selected
       .map((category) => `
-        <button
-          class="quick-selected-item ${quickSelectedSelection === category.id ? "selected" : ""} ${draggingId === category.id ? "dragging" : ""}"
-          type="button"
+        <div
+          class="quick-selected-item ${quickSelectedSelection === category.id ? "selected" : ""}"
+          role="button"
+          tabindex="0"
           data-quick-selected="${category.id}"
           aria-pressed="${quickSelectedSelection === category.id ? "true" : "false"}"
         >
           ${iconMarkup(category)}
           <span>${escapeHTML(category.label)}</span>
-        </button>
+        </div>
       `)
       .join("")
     : `<div class="empty-state quick-empty">还没有快捷分类</div>`;
@@ -1197,6 +1353,8 @@ function renderQuickCategoryManager(draggingId = null) {
   if (elements.removeQuickCategory) {
     elements.removeQuickCategory.disabled = !quickSelectedSelection || !recentSet.has(quickSelectedSelection);
   }
+
+  initQuickSortable();
 }
 
 function getManagerCategory() {
@@ -1212,6 +1370,14 @@ function setCategorySheetMode(mode) {
   elements.categoryManagerTitle.textContent = isQuickMode ? "设置快捷" : "管理分类";
   elements.quickManagerPanel.hidden = !isQuickMode;
   elements.categoryEditorPanel.hidden = isQuickMode;
+  setQuickSortingActive(false);
+  setCategorySortingActive(false);
+  if (quickSortable) {
+    quickSortable.option("disabled", !isQuickMode);
+  }
+  if (categorySortable) {
+    categorySortable.option("disabled", isQuickMode);
+  }
 }
 
 function renderCategoryEditor() {
@@ -1229,10 +1395,16 @@ function renderCategoryEditor() {
 
   elements.categoryEditorList.innerHTML = list
     .map((item) => `
-      <button class="category-editor-item ${item.id === category.id ? "active" : ""}" type="button" data-manager-category="${item.id}">
+      <div
+        class="category-editor-item ${item.id === category.id ? "active" : ""}"
+        role="button"
+        tabindex="0"
+        data-manager-category="${item.id}"
+        aria-pressed="${item.id === category.id ? "true" : "false"}"
+      >
         ${iconMarkup(item)}
         <span>${escapeHTML(item.label)}</span>
-      </button>
+      </div>
     `)
     .join("");
 
@@ -1251,6 +1423,8 @@ function renderCategoryEditor() {
       </button>
     `)
     .join("");
+
+  initCategorySortable();
 }
 
 function renderCategoryManager() {
@@ -1282,7 +1456,7 @@ function openCategoryManager() {
   }
 }
 
-function commitCategoryName(showMessage = false) {
+function commitCategoryName(showMessage = false, { renderEditor = true } = {}) {
   const category = getManagerCategory();
   const nextName = elements.categoryNameInput.value.trim();
   if (!category) return false;
@@ -1299,7 +1473,9 @@ function commitCategoryName(showMessage = false) {
   saveState();
   renderCategoryPicker();
   render();
-  renderCategoryEditor();
+  if (renderEditor) {
+    renderCategoryEditor();
+  }
   if (showMessage) {
     showToast("分类已保存");
   }
@@ -1310,6 +1486,8 @@ function closeCategoryManager({ commit = true } = {}) {
   if (commit && categorySheetMode === "editor" && elements.categorySheet.classList.contains("open")) {
     commitCategoryName(false);
   }
+  setQuickSortingActive(false);
+  setCategorySortingActive(false);
   elements.categorySheet.classList.remove("open");
   elements.categorySheet.setAttribute("aria-hidden", "true");
   quickPoolSelection = null;
@@ -1362,108 +1540,6 @@ function handleRecentCategoryClick(event) {
     quickSelectedSelection = null;
   }
   renderQuickCategoryManager();
-}
-
-function clearRecentCategoryDragTimer() {
-  if (!recentCategoryDrag?.timer) return;
-  window.clearTimeout(recentCategoryDrag.timer);
-  recentCategoryDrag.timer = null;
-}
-
-function setRecentCategorySortState(active, draggingId = null) {
-  elements.recentCategoryList.classList.toggle("sorting", active);
-  elements.categorySheet.classList.toggle("quick-sorting", active);
-  document.documentElement.classList.toggle("gesture-lock", active);
-
-  elements.recentCategoryList.querySelectorAll("[data-quick-selected]").forEach((item) => {
-    item.classList.toggle("dragging", active && item.dataset.quickSelected === draggingId);
-  });
-}
-
-function enterRecentCategorySortMode() {
-  if (!recentCategoryDrag) return;
-  recentCategoryDrag.sorting = true;
-  quickSelectedSelection = recentCategoryDrag.id;
-  quickPoolSelection = null;
-  setRecentCategorySortState(true, recentCategoryDrag.id);
-  recentCategoryDrag.button?.setPointerCapture?.(recentCategoryDrag.pointerId);
-}
-
-function beginRecentCategoryDrag(event) {
-  const icon = event.target.closest(".category-icon");
-  if (!icon) return;
-  const button = icon.closest("[data-quick-selected]");
-  if (!button) return;
-  if (event.button !== undefined && event.button !== 0) return;
-
-  recentCategoryDrag = {
-    id: button.dataset.quickSelected,
-    type: managerType,
-    button,
-    pointerId: event.pointerId,
-    startX: event.clientX,
-    startY: event.clientY,
-    changed: false,
-    sorting: false,
-    timer: window.setTimeout(enterRecentCategorySortMode, RECENT_DRAG_HOLD_DELAY)
-  };
-}
-
-function updateRecentCategoryDrag(event) {
-  if (!recentCategoryDrag) return;
-  if (recentCategoryDrag.pointerId !== event.pointerId) return;
-
-  if (!recentCategoryDrag.sorting) {
-    const distance = Math.hypot(event.clientX - recentCategoryDrag.startX, event.clientY - recentCategoryDrag.startY);
-    if (distance > RECENT_DRAG_CANCEL_DISTANCE) {
-      clearRecentCategoryDragTimer();
-      recentCategoryDrag = null;
-    }
-    return;
-  }
-
-  event.preventDefault();
-
-  const target = [...elements.recentCategoryList.querySelectorAll("[data-quick-selected]")]
-    .find((item) => {
-      const rect = item.getBoundingClientRect();
-      return event.clientX >= rect.left
-        && event.clientX <= rect.right
-        && event.clientY >= rect.top
-        && event.clientY <= rect.bottom;
-    });
-
-  if (target && target.dataset.quickSelected !== recentCategoryDrag.id) {
-    const didChange = reorderRecentCategory(recentCategoryDrag.type, recentCategoryDrag.id, target.dataset.quickSelected, { persist: false });
-    recentCategoryDrag.changed = recentCategoryDrag.changed || didChange;
-  }
-}
-
-function endRecentCategoryDrag(event) {
-  if (!recentCategoryDrag) return;
-  if (event?.pointerId !== undefined && recentCategoryDrag.pointerId !== event.pointerId) return;
-
-  const wasSorting = recentCategoryDrag.sorting;
-  const changed = recentCategoryDrag.changed;
-  const draggedId = recentCategoryDrag.id;
-  clearRecentCategoryDragTimer();
-  setRecentCategorySortState(false);
-
-  if (wasSorting) {
-    event?.preventDefault?.();
-    if (changed) {
-      saveState();
-      renderCategoryPicker();
-    }
-    quickSelectedSelection = draggedId;
-    renderQuickCategoryManager();
-    suppressRecentCategoryClick = true;
-    window.setTimeout(() => {
-      suppressRecentCategoryClick = false;
-    }, 0);
-  }
-
-  recentCategoryDrag = null;
 }
 
 function addCustomCategory() {
@@ -1947,17 +2023,34 @@ function bindEvents() {
   elements.categoryEditorList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-manager-category]");
     if (!button) return;
+    if (suppressCategoryEditorClick) {
+      event.preventDefault();
+      return;
+    }
+    setManagerCategory(button.dataset.managerCategory);
+  });
+
+  elements.categoryEditorList.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const button = event.target.closest("[data-manager-category]");
+    if (!button) return;
+    event.preventDefault();
     setManagerCategory(button.dataset.managerCategory);
   });
 
   elements.recentCategoryList.addEventListener("click", handleRecentCategoryClick);
-  elements.recentCategoryList.addEventListener("pointerdown", beginRecentCategoryDrag);
+  elements.recentCategoryList.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const button = event.target.closest("[data-quick-selected]");
+    if (!button) return;
+    event.preventDefault();
+    quickSelectedSelection = button.dataset.quickSelected;
+    quickPoolSelection = null;
+    renderQuickCategoryManager();
+  });
   elements.quickCategoryPool.addEventListener("click", handleRecentCategoryClick);
   elements.addQuickCategory.addEventListener("click", () => addQuickCategory());
   elements.removeQuickCategory.addEventListener("click", () => removeQuickCategory());
-  window.addEventListener("pointermove", updateRecentCategoryDrag);
-  window.addEventListener("pointerup", endRecentCategoryDrag);
-  window.addEventListener("pointercancel", endRecentCategoryDrag);
 
   elements.iconGrid.addEventListener("click", (event) => {
     const button = event.target.closest("[data-icon]");
@@ -1966,7 +2059,7 @@ function bindEvents() {
   });
 
   elements.addCategory.addEventListener("click", addCustomCategory);
-  elements.saveQuickCategory.addEventListener("click", closeCategoryManager);
+  elements.saveQuickCategory.addEventListener("click", () => closeCategoryManager({ commit: false }));
   elements.saveCategory.addEventListener("click", () => {
     if (commitCategoryName(true)) {
       closeCategoryManager({ commit: false });

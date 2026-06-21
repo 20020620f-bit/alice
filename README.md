@@ -45,33 +45,6 @@ iPhone 和电脑连接同一个 Wi-Fi 时，可以用终端里显示的局域网
 http://192.168.x.x:5173/
 ```
 
-## 本地调试工作台
-
-调 UI 时先打开：
-
-```text
-http://localhost:5173/ui-tuner.html
-```
-
-这个页面只做本地预览，不会直接改正式 App 代码。推荐流程：
-
-1. 在 `ui-tuner.html` 里调整字号、间距、圆环和手机宽度。
-2. 满意后复制参数给 Codex，让 Codex 落到 `styles.css`。
-3. 再打开 `http://localhost:5173/` 检查正式页面。
-4. 本地确认没问题后再 `git commit` 和 `git push`。
-
-手机真机调试：
-
-1. 电脑和 iPhone 连接同一个 Wi-Fi。
-2. 运行 `serve.ps1` 后，终端会显示 `Phone on same Wi-Fi` 下的 `Workbench` 地址。
-3. 用 iPhone Safari 打开这个地址，例如：
-
-```text
-http://192.168.x.x:5173/ui-tuner.html
-```
-
-在手机上打开时，预览会占满手机屏幕，调试面板会变成底部抽屉，可以收起或展开。
-
 ## iPhone 安装到主屏幕
 
 1. 用 iPhone Safari 打开网页地址。
@@ -120,5 +93,4 @@ sw.js                   PWA 缓存
 manifest.webmanifest    添加到主屏幕配置
 assets/                 图标资源
 serve.ps1               本地静态服务器脚本
-ui-tuner.html           本地 UI 调试工作台
 ```
